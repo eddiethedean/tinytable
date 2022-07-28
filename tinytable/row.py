@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, List
 
 
 class Row:
-    def __init__(self, data: dict[str, list], index: int, parent=None):
+    def __init__(self, data: dict[str, List], index: int, parent=None):
         self.data = data
         self.index = index
         self.parent = parent
@@ -25,10 +25,21 @@ class Row:
             self.parent.edit_value(column, self.index, value)
     
     @property
-    def columns(self) -> list[str]:
+    def columns(self) -> List[str]:
         return list(self.data.keys())
+
+    def drop(self) -> None:
+        """drop Row from parent"""
+        if self.parent is not None:
+            self.parent.drop_row(self.index)
+            self.parent = None
+
+
+def row_dict(data, index: int):
+    return {col: data[col][index] for col in data}
 
 
 def row_values_generator(row: dict[str, Any]):
     for key in row:
         yield row[key]
+

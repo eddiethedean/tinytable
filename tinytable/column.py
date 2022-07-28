@@ -1,9 +1,9 @@
-from typing import Any
+from typing import Any, List
 
 
 class Column:
-    def __init__(self, data: list, name: str, parent=None):
-        self.data = data
+    def __init__(self, data: List, name: str, parent=None):
+        self.data = list(data)
         self.name = name
         self.parent = None
         
@@ -23,3 +23,13 @@ class Column:
         self.data[index] = value
         if self.parent is not None:
             self.parent.edit_value(self.name, index, value)
+
+    def drop(self):
+        """drop Column from parent"""
+        if self.parent is not None:
+            self.parent.drop_column(self.name)
+            self.parent = None
+
+
+def column_dict(data, col: str) -> dict[str, List]:
+    return {col: data[col]}
