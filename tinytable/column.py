@@ -1,4 +1,6 @@
-from typing import Any, List
+from typing import Any, Callable, List
+
+from tabulate import tabulate
 
 
 class Column:
@@ -11,7 +13,7 @@ class Column:
         return len(self.data)
     
     def __repr__(self) -> str:
-        return f'Column({self.data}, name={self.name})'
+        return tabulate({self.name: self.data}, headers=[self.name], tablefmt='grid', showindex=True)
     
     def __iter__(self):
         return iter(self.data)
@@ -29,6 +31,11 @@ class Column:
         if self.parent is not None:
             self.parent.drop_column(self.name)
             self.parent = None
+
+    def cast_as(self, data_type: Callable) -> None:
+        self.data = [data_type(item) for item in self.data]
+        if self.parent is not None:
+            self.parent.cast_column_as(self.name, data_type)
 
 
 def column_dict(data, col: str) -> dict[str, List]:

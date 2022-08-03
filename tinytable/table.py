@@ -1,5 +1,8 @@
-from typing import Any, Collection, Generator, Iterable, Mapping, Union
+from typing import Any, Callable, Collection, Generator, Iterable, Iterator, List, Mapping, Union
 from copy import copy, deepcopy
+import csv
+
+from tabulate import tabulate
 
 from tinytable.row import Row
 from tinytable.column import Column
@@ -16,7 +19,15 @@ class Table:
             self.data = deepcopy(data)
         else:
             self.data = data
+        self._store_data()
         self._validate()
+
+    def _store_data(self):
+        for col in self.data:
+            self._store_column(col, self.data[col])
+
+    def _store_column(self, column_name: str, values: Collection) -> None:
+        self.data[column_name] = list(values)
         
     def __len__(self) -> int:
         if len(self.data) == 0:
@@ -24,12 +35,17 @@ class Table:
         return len(self.data[self.columns[0]])
         
     def __repr__(self) -> str:
-        return f'Table({self.data})'
+        return tabulate(self, headers=self.columns, tablefmt='grid')
     
-    def __iter__(self) -> Generator[dict, None, None]:
-        return self.itercolumns()
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.data)
     
     def __getitem__(self, key: Union[str, int]) -> Union[Column, Row]:
+        """Use str key for Column selection.
+           Use int key for Row selection.
+
+           Use int:int:int for slice of rows selection.
+        """
         if type(key) == str:
             return self.column(str(key))
         if type(key) == int:
@@ -77,6 +93,15 @@ class Table:
                 raise ValueError('All columns must be of the same length')
             count = col_count
         return True
+
+    def shape(self) -> tuple[int, int]:
+        return len(self.index), len(self.columns)
+
+    def head(self, n=5):
+        ...
+
+    def tail(self, n=5):
+        ...
             
     def row(self, index: int) -> Row:
         return Row(row_dict(self.data, index), index, self)
@@ -85,8 +110,9 @@ class Table:
         return Column(self.data[column_name], column_name, self)
 
     def rows_slice(self, slc: slice):
-        ...
-
+        for i in range(slc.start, slc.stop, slc.step):
+            ...
+        
     def columns_subset(self, column_names: Iterable[str]):
         ...
 
@@ -98,9 +124,21 @@ class Table:
             self.data[col].pop(index)
     
     @property
-    def columns(self) -> list[str]:
+    def columns(self) -> List[str]:
         """Column names."""
         return list(self.data.keys())
+
+    @columns.setter
+    def columns(self, values: Collection) -> None:
+        """Set the value of the column names."""
+        self.replace_column_names(values)
+
+    def keys(self) -> List[str]:
+        return self.columns
+
+    @property
+    def index(self) -> Column:
+        return Column(range(len(self)), name=None)
     
     def itercolumns(self) -> Generator[dict, None, None]:
         for col in self.columns:
@@ -124,7 +162,7 @@ class Table:
                 self.data[col][index] = value
             
     def edit_column(self, column_name: str, values: Iterable) -> None:
-        self.data[column_name] = list(values)
+        self._store_column(column_name, values)
             
     def edit_value(self, column_name: str, index: int, value: Any) -> None:
         self.data[column_name][index] = value
@@ -134,8 +172,23 @@ class Table:
              return type(self)({key: deepcopy(values) for key, values in self.data.items()})
         return type(self)({key: copy(values) for key, values in self.data.items()})
 
+    def cast_column_as(self, column_name: str, data_type: Callable) -> None:
+        self.data[column_name] = [data_type(value) for value in self.data[column_name]]
+
+    def replace_column_names(self, new_keys: Collection) -> None:
+        if len(new_keys) != len(self.keys()):
+            raise ValueError('new_keys must be same len as dict keys.')
+        for new_key, old_key in zip(new_keys, self.keys()):
+            if new_key != old_key:
+                self[new_key] = self[old_key]
+                del self[old_key]
+
+    def to_csv(self, path: str) -> None:
+        """Save Table as csv at path."""
+        ...
+
     
-def iterrows(data):
+def iterrows(data) -> Generator[dict, None, None]:
     if len(data) == 0:
         return
     i = 0
@@ -145,3 +198,22 @@ def iterrows(data):
         except IndexError:
             return
         i += 1
+
+
+def read_csv(path: str, chunk=None) -> Table:
+    """
+    Reads a table object from given CSV file.
+    """
+    columnNames = []
+    matrix = []
+    first = True
+    with open(path, 'r', newline='') as f:
+        dialect = csv.Sniffer().sniff(f.read(1024))
+        f.seek(0)
+        for row in csv.reader(f, dialect):
+            if first:
+                columnNames = row
+                first = False
+            else:
+                matrix.append(list(row))
+        return Table(dict(zip(columnNames, matrix)))

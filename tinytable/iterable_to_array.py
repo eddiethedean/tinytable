@@ -18,12 +18,12 @@ def all_numeric(iterable: Iterable) -> bool:
 
 def is_float_array(iterable: Iterable, min_max: tuple) -> bool:
     min_num, max_num = min_max
-    return (-min_num >= 1.2E-38 and max_num <= 3.4E+38)
+    return (abs(min_num) >= 1.2E-38 and max_num <= 3.4E+38)
 
 
 def is_double_array(iterable: Iterable, min_max: tuple) -> bool:
     min_num, max_num = min_max
-    return (-min_num >= 2.3E-308 and max_num <= 1.7E+308)
+    return (abs(min_num) >= 2.3E-308 and max_num <= 1.7E+308)
 
 
 def is_string_array(iterable: Iterable):

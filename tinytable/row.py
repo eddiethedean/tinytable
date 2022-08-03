@@ -1,5 +1,7 @@
 from typing import Any, List
 
+from tabulate import tabulate
+
 
 class Row:
     def __init__(self, data: dict[str, List], index: int, parent=None):
@@ -14,7 +16,7 @@ class Row:
         return row_values_generator(self.data)
     
     def __repr__(self) -> str:
-        return f'Row(data={self.data}, index={self.index})'
+        return tabulate([self], headers=self.columns, tablefmt='grid', showindex=[self.index])
     
     def __getitem__(self, column: str) -> Any:
         return self.data[column]
@@ -26,6 +28,9 @@ class Row:
     
     @property
     def columns(self) -> List[str]:
+        return list(self.data.keys())
+
+    def keys(self) -> List[str]:
         return list(self.data.keys())
 
     def drop(self) -> None:
