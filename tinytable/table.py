@@ -1,12 +1,12 @@
-from typing import Any, Callable, Collection, Generator, Iterable, Iterator, List, Mapping, Union
+from typing import Any, Callable, Collection, Generator, Iterable, Iterator, List, Mapping, Optional, Union
 from copy import copy, deepcopy
-import csv
 
 from tabulate import tabulate
 
 from tinytable.row import Row
 from tinytable.column import Column
 from tinytable.row import row_dict
+from tinytable.csv import read_csv_file, chunk_csv_file
 
 
 class Table:
@@ -67,7 +67,7 @@ class Table:
         if index > len(self) - 1 or index < 0:
             raise IndexError(f'row index {index} out of range (0-{upper_range})')
     
-    def __setitem__(self, key: Union[str, int], values: Union[Collection, Mapping]) -> None:
+    def __setitem__(self, key: Union[str, int], values: Collection) -> None:
         if type(key) == str:
             column_name: str = str(key)
             self.edit_column(column_name, values)
@@ -138,13 +138,13 @@ class Table:
 
     @property
     def index(self) -> Column:
-        return Column(range(len(self)), name=None)
+        return Column(list(range(len(self))), name='None')
     
     def itercolumns(self) -> Generator[dict, None, None]:
         for col in self.columns:
             yield {col: self.data[col]}
             
-    def iterrows(self) -> Generator[dict, None, None]:
+    def iterrows(self) -> Generator[Row, None, None]:
         return iterrows(self.data)
     
     @property
@@ -161,7 +161,7 @@ class Table:
             for col, value in zip(self.columns, values):
                 self.data[col][index] = value
             
-    def edit_column(self, column_name: str, values: Iterable) -> None:
+    def edit_column(self, column_name: str, values: Collection) -> None:
         self._store_column(column_name, values)
             
     def edit_value(self, column_name: str, index: int, value: Any) -> None:
@@ -175,45 +175,35 @@ class Table:
     def cast_column_as(self, column_name: str, data_type: Callable) -> None:
         self.data[column_name] = [data_type(value) for value in self.data[column_name]]
 
-    def replace_column_names(self, new_keys: Collection) -> None:
-        if len(new_keys) != len(self.keys()):
+    def replace_column_names(self, new_keys: Collection[str]) -> None:
+        if len(new_keys) != len(self.data.keys()):
             raise ValueError('new_keys must be same len as dict keys.')
-        for new_key, old_key in zip(new_keys, self.keys()):
+        for new_key, old_key in zip(new_keys, self.data.keys()):
             if new_key != old_key:
-                self[new_key] = self[old_key]
-                del self[old_key]
+                self.data[new_key] = self.data[old_key]
+                del self.data[old_key]
 
     def to_csv(self, path: str) -> None:
         """Save Table as csv at path."""
         ...
 
     
-def iterrows(data) -> Generator[dict, None, None]:
+def iterrows(data) -> Generator[Row, None, None]:
     if len(data) == 0:
         return
     i = 0
     while True:
         try:
-            yield {col: data[col][i] for col in data}
+            yield Row({col: data[col][i] for col in data}, i)
         except IndexError:
             return
         i += 1
 
 
-def read_csv(path: str, chunk=None) -> Table:
-    """
-    Reads a table object from given CSV file.
-    """
-    columnNames = []
-    matrix = []
-    first = True
-    with open(path, 'r', newline='') as f:
-        dialect = csv.Sniffer().sniff(f.read(1024))
-        f.seek(0)
-        for row in csv.reader(f, dialect):
-            if first:
-                columnNames = row
-                first = False
-            else:
-                matrix.append(list(row))
-        return Table(dict(zip(columnNames, matrix)))
+def read_csv(path: str, chunksize: Optional[int]=None):
+    if chunksize is None:
+        return Table(read_csv_file(path))
+    else:
+        if isinstance(chunksize, int):
+            for chunk in chunk_csv_file(path, chunksize):
+                yield Table(chunk)

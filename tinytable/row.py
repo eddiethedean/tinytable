@@ -39,6 +39,9 @@ class Row:
             self.parent.drop_row(self.index)
             self.parent = None
 
+    def values(self) -> List[Any]:
+        return list(self.data.values())
+
 
 def row_dict(data, index: int):
     return {col: data[col][index] for col in data}
