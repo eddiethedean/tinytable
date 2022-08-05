@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Generator, List
 
 from tabulate import tabulate
 
@@ -50,4 +50,16 @@ def row_dict(data, index: int):
 def row_values_generator(row: dict[str, Any]):
     for key in row:
         yield row[key]
+
+
+def iterrows(data: dict[str, List], parent) -> Generator[Row, None, None]:
+    if len(data) == 0:
+        return
+    i = 0
+    while True:
+        try:
+            yield Row({col: data[col][i] for col in data}, i, parent)
+        except IndexError:
+            return
+        i += 1
 

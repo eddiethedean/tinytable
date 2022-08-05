@@ -1,9 +1,7 @@
 import csv
 from typing import Generator, List, Union
 
-
-def combine_names_rows(column_names, rows) -> dict[str, List]:
-    return dict(zip(column_names, map(list, zip(*rows))))
+from tinytable.utils import combine_names_rows
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:

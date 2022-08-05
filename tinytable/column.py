@@ -1,10 +1,10 @@
-from typing import Any, Callable, List
+from typing import Any, Callable, Generator, List, Union
 
 from tabulate import tabulate
 
 
 class Column:
-    def __init__(self, data: List, name: str, parent=None):
+    def __init__(self, data: List, name: Union[str, None], parent=None):
         self.data = list(data)
         self.name = name
         self.parent = None
@@ -13,7 +13,8 @@ class Column:
         return len(self.data)
     
     def __repr__(self) -> str:
-        return tabulate({self.name: self.data}, headers=[self.name], tablefmt='grid', showindex=True)
+        header = 'index' if self.name is None else self.name
+        return tabulate({header: self.data}, headers=[header], tablefmt='grid', showindex=True)
     
     def __iter__(self):
         return iter(self.data)
@@ -40,3 +41,8 @@ class Column:
 
 def column_dict(data, col: str) -> dict[str, List]:
     return {col: data[col]}
+
+
+def ittercolumns(data: dict[str, List], parent) -> Generator[Column, None, None]:
+    for col in data.keys():
+        yield Column(data[col], col, parent)

@@ -1,13 +1,15 @@
 from typing import List, Mapping, Optional, Union, Iterator
-from typing import Any, Callable, Collection, Generator, Iterable
+from typing import Any, Callable, Collection, Generator
 from copy import copy, deepcopy
 
 from tabulate import tabulate
 
-from tinytable.row import Row
-from tinytable.column import Column
+from tinytable.row import Row, iterrows
+from tinytable.column import Column, ittercolumns
 from tinytable.row import row_dict
 from tinytable.csv import read_csv_file, chunk_csv_file
+from tinytable.excel import read_excel_file
+from tinytable.sqlite import read_sqlite_table
 
 
 class Table:
@@ -185,24 +187,6 @@ class Table:
 #   """
     
 
-    
-def iterrows(data: dict[str, List], parent) -> Generator[Row, None, None]:
-    if len(data) == 0:
-        return
-    i = 0
-    while True:
-        try:
-            yield Row({col: data[col][i] for col in data}, i, parent)
-        except IndexError:
-            return
-        i += 1
-
-
-def ittercolumns(data: dict[str, List], parent) -> Generator[Column, None, None]:
-    for col in data.keys():
-        yield Column(data[col], col, parent)
-
-
 def read_csv(path: str, chunksize: Optional[int]=None):
     if chunksize is None:
         return Table(read_csv_file(path))
@@ -210,3 +194,11 @@ def read_csv(path: str, chunksize: Optional[int]=None):
         if isinstance(chunksize, int):
             for chunk in chunk_csv_file(path, chunksize):
                 yield Table(chunk)
+
+
+def read_excel(path: str, sheet_name: Optional[str] = None) -> Table:
+    return Table(read_excel_file(path, sheet_name))
+
+
+def read_sqlite(path: str, table_name: str) -> Table:
+    return Table(read_sqlite_table(path, table_name))
