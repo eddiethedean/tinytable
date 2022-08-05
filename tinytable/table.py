@@ -1,4 +1,5 @@
-from typing import Any, Callable, Collection, Generator, Iterable, Iterator, List, Mapping, Optional, Union
+from typing import List, Mapping, Optional, Union, Iterator
+from typing import Any, Callable, Collection, Generator, Iterable
 from copy import copy, deepcopy
 
 from tabulate import tabulate
@@ -96,25 +97,12 @@ class Table:
 
     def shape(self) -> tuple[int, int]:
         return len(self.index), len(self.columns)
-
-    def head(self, n=5):
-        ...
-
-    def tail(self, n=5):
-        ...
             
     def row(self, index: int) -> Row:
         return Row(row_dict(self.data, index), index, self)
 
     def column(self, column_name: str) -> Column:
         return Column(self.data[column_name], column_name, self)
-
-    def rows_slice(self, slc: slice):
-        for i in range(slc.start, slc.stop, slc.step):
-            ...
-        
-    def columns_subset(self, column_names: Iterable[str]):
-        ...
 
     def drop_column(self, column_name: str) -> None:
         del self.data[column_name]
@@ -138,14 +126,13 @@ class Table:
 
     @property
     def index(self) -> Column:
-        return Column(list(range(len(self))), name='None')
+        return Column(list(range(len(self))), None, self)
     
-    def itercolumns(self) -> Generator[dict, None, None]:
-        for col in self.columns:
-            yield {col: self.data[col]}
+    def itercolumns(self) -> Generator[Column, None, None]:
+        return ittercolumns(self.data, self)
             
     def iterrows(self) -> Generator[Row, None, None]:
-        return iterrows(self.data)
+        return iterrows(self.data, self)
     
     @property
     def values(self) -> list[list]:
@@ -187,17 +174,33 @@ class Table:
         """Save Table as csv at path."""
         ...
 
+    def to_excel(self, path: str) -> None:
+        """Save Table in Excel Workbook."""
+        ...
+
+
+# TODO: class SubTable(Table):
+#   """A subset of a Table object.
+#      Any changes to SubTable are changed in parent Table.
+#   """
     
-def iterrows(data) -> Generator[Row, None, None]:
+
+    
+def iterrows(data: dict[str, List], parent) -> Generator[Row, None, None]:
     if len(data) == 0:
         return
     i = 0
     while True:
         try:
-            yield Row({col: data[col][i] for col in data}, i)
+            yield Row({col: data[col][i] for col in data}, i, parent)
         except IndexError:
             return
         i += 1
+
+
+def ittercolumns(data: dict[str, List], parent) -> Generator[Column, None, None]:
+    for col in data.keys():
+        yield Column(data[col], col, parent)
 
 
 def read_csv(path: str, chunksize: Optional[int]=None):
