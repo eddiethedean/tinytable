@@ -57,16 +57,12 @@ def chunk_csv_file(
 
 def read_csv_file(
     path: str,
-    chunksize=None,
     newline='',
     encoding='utf-8-sig'
-) -> Union[dict, Generator[dict, None, None]]:
+) -> dict:
     """
     Reads a table object from given CSV file path.
     """
-    if chunksize is not None:
-        return chunk_csv_file(path, chunksize=chunksize, newline=newline, encoding=encoding)
-    
     column_names = []
     rows = []
     first = True

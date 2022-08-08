@@ -4,7 +4,7 @@ from tabulate import tabulate
 
 
 class Row:
-    def __init__(self, data: dict[str, List], index: int, parent=None):
+    def __init__(self, data: dict[str, Any], index: int, parent=None):
         self.data = data
         self.index = index
         self.parent = parent
@@ -16,7 +16,7 @@ class Row:
         return row_values_generator(self.data)
     
     def __repr__(self) -> str:
-        return tabulate([self], headers=self.columns, tablefmt='grid', showindex=[self.index])
+        return tabulate({col: [value] for col, value in self.data.items()}, headers=self.columns, tablefmt='grid', showindex=[self.index])
     
     def __getitem__(self, column: str) -> Any:
         return self.data[column]

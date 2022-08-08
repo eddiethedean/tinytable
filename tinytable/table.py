@@ -1,15 +1,19 @@
+from __future__ import annotations
 from typing import List, Mapping, Optional, Union, Iterator
 from typing import Any, Callable, Collection, Generator
 from copy import copy, deepcopy
+import random
 
 from tabulate import tabulate
 
 from tinytable.row import Row, iterrows
 from tinytable.column import Column, ittercolumns
 from tinytable.row import row_dict
-from tinytable.csv import read_csv_file, chunk_csv_file
+from tinytable.csv import read_csv_file
 from tinytable.excel import read_excel_file
 from tinytable.sqlite import read_sqlite_table
+from tinytable.utils import uniques, slice_to_range
+from tinytable.filter import Filter
 
 
 class Table:
@@ -17,11 +21,8 @@ class Table:
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data, deep_copy=False):
-        if deep_copy:
-            self.data = deepcopy(data)
-        else:
-            self.data = data
+    def __init__(self, data):
+        self.data = data
         self._store_data()
         self._validate()
 
@@ -43,32 +44,40 @@ class Table:
     def __iter__(self) -> Iterator[str]:
         return iter(self.data)
     
-    def __getitem__(self, key: Union[str, int]) -> Union[Column, Row]:
-        """Use str key for Column selection.
-           Use int key for Row selection.
-
-           Use int:int:int for slice of rows selection.
+    def __getitem__(self, key: Union[str, int]) -> Union[Column, Row, Table]:
         """
-        if type(key) == str:
+           Use str key for Column selection. Setting Column items changes parent Table.
+           Use int key for Row selection. Setting Row items changes parent Table.
+
+           Selecting subset of Table returns new Table,
+           changes do not change original Table.
+           Use int:int:int for index slice of Table rows.
+           Use list of bool values to filter to Table of True rows.
+           Use Filter to filter to Table of True rows.
+        """
+        # tbl['id'] -> Column
+        if isinstance(key, str):
             return self.column(str(key))
-        if type(key) == int:
+        # tbl[1] -> Row
+        if isinstance(key, int):
             index: int = self._convert_index(key)
             self._validate_index(index)
             return self.row(index)
-        raise TypeError('key must be str for column selection or int for row selection.')
-
-    def _convert_index(self, index) -> int:
-        index = int(index)
-        if index < 0:
-            return len(self) + index
-        return index
-
-    def _validate_index(self, index: int) -> None:
-        if len(self) == 0:
-            raise IndexError('row index out of range (empty Table)')
-        upper_range = len(self) - 1
-        if index > len(self) - 1 or index < 0:
-            raise IndexError(f'row index {index} out of range (0-{upper_range})')
+        # tbl[1:4] -> Table
+        if isinstance(key, slice):
+            validate_int_slice(key)
+            return self.filter_by_indexes(slice_to_range(key, len(self)))
+        if isinstance(key, list):
+            if all_bool(key):
+                # tbl[[True, False, True, True]] -> Table
+                return self.filter(key)
+            # tbl[['id', 'name']] -> Table
+            validate_list_key(key)
+            return self.only_columns(key)
+        if isinstance(key, Filter):
+            # tbl[tbl['age'] >= 18] -> Table
+            return self.filter(key)
+        raise TypeError('key must be str for column selection, int for row selection or slice for subset of Table rows.')
     
     def __setitem__(self, key: Union[str, int], values: Collection) -> None:
         if type(key) == str:
@@ -85,6 +94,56 @@ class Table:
         elif type(key) == int:
             index: int = int(key)
             self.drop_row(index)
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        return len(self.index), len(self.columns)
+
+    @property
+    def size(self) -> int:
+        return self.shape[0] * self.shape[1]
+
+    @property
+    def columns(self) -> List[str]:
+        """Column names."""
+        return list(self.data.keys())
+
+    @columns.setter
+    def columns(self, values: Collection) -> None:
+        """Set the value of the column names."""
+        self.replace_column_names(values)
+
+    @property
+    def index(self) -> Column:
+        return Column(list(range(len(self))), None, self)
+
+    @property
+    def values(self) -> list[list]:
+        return [list(row.values()) for row in self.iterrows()]
+
+    def filter(self, f: Filter) -> Table:
+        indexes = self.indexes_from_filter(f)
+        return self.filter_by_indexes(indexes)
+
+    def indexes_from_filter(self, f: Filter) -> List[int]:
+        return [i for i, b in enumerate(f) if b]
+
+    def only_columns(self, column_names: Collection[str]) -> Table:
+        """Return new Table with only column_names Columns."""
+        d = {col: self.data[col] for col in column_names}
+        return Table(d)
+
+    def _convert_index(self, index: int) -> int:
+        if index < 0:
+            return len(self) + index
+        return index
+
+    def _validate_index(self, index: int) -> None:
+        if len(self) == 0:
+            raise IndexError('row index out of range (empty Table)')
+        upper_range = len(self) - 1
+        if index > len(self) - 1 or index < 0:
+            raise IndexError(f'row index {index} out of range (0-{upper_range})')
         
     def _validate(self) -> bool:
         count = None
@@ -96,10 +155,7 @@ class Table:
                 raise ValueError('All columns must be of the same length')
             count = col_count
         return True
-
-    def shape(self) -> tuple[int, int]:
-        return len(self.index), len(self.columns)
-            
+   
     def row(self, index: int) -> Row:
         return Row(row_dict(self.data, index), index, self)
 
@@ -112,33 +168,15 @@ class Table:
     def drop_row(self, index: int) -> None:
         for col in self.columns:
             self.data[col].pop(index)
-    
-    @property
-    def columns(self) -> List[str]:
-        """Column names."""
-        return list(self.data.keys())
-
-    @columns.setter
-    def columns(self, values: Collection) -> None:
-        """Set the value of the column names."""
-        self.replace_column_names(values)
 
     def keys(self) -> List[str]:
         return self.columns
-
-    @property
-    def index(self) -> Column:
-        return Column(list(range(len(self))), None, self)
     
     def itercolumns(self) -> Generator[Column, None, None]:
         return ittercolumns(self.data, self)
             
     def iterrows(self) -> Generator[Row, None, None]:
         return iterrows(self.data, self)
-    
-    @property
-    def values(self) -> list[list]:
-        return [list(row.values()) for row in self.iterrows()]
     
     def edit_row(self, index: int, values: Union[Mapping, Collection]) -> None:
         if isinstance(values, Mapping):
@@ -156,10 +194,10 @@ class Table:
     def edit_value(self, column_name: str, index: int, value: Any) -> None:
         self.data[column_name][index] = value
 
-    def copy(self, deep=False):
+    def copy(self, deep=False) -> Table:
         if deep:
              return type(self)({key: deepcopy(values) for key, values in self.data.items()})
-        return type(self)({key: copy(values) for key, values in self.data.items()})
+        return Table({key: copy(values) for key, values in self.data.items()})
 
     def cast_column_as(self, column_name: str, data_type: Callable) -> None:
         self.data[column_name] = [data_type(value) for value in self.data[column_name]]
@@ -180,20 +218,37 @@ class Table:
         """Save Table in Excel Workbook."""
         ...
 
+    def to_sqlite(self, path: str, table_name: str) -> None:
+        """Save Table in sqlite database."""
+        ...
 
-# TODO: class SubTable(Table):
-#   """A subset of a Table object.
-#      Any changes to SubTable are changed in parent Table.
-#   """
+    def head(self, n: int = 5) -> Table:
+        return Table({col: values[:n] for col, values in self.data.items()})
+
+    def tail(self, n: int = 5) -> Table:
+        return Table({col: values[-n:] for col, values in self.data.items()})
+
+    def nunique(self) -> dict[str, int]:
+        """Count number of distinct values in each column.
+           Return dict with number of distinct values.
+        """
+        return {col: len(uniques(values)) for col, values in self.data.items()}
+
+    def filter_by_indexes(self, indexes: Collection[int]) -> Table:
+        """return only rows in indexes"""
+        d = {col: [values[i] for i in indexes] for col, values in self.data.items()}
+        return Table(d)
+
+    def sample(self, n, random_state=None) -> Table:
+        """return random sample of rows"""
+        if random_state is not None:
+            random.seed(random_state)
+        indexes = random.sample(range(len(self)), n)
+        return self.filter_by_indexes(indexes)
     
 
-def read_csv(path: str, chunksize: Optional[int]=None):
-    if chunksize is None:
-        return Table(read_csv_file(path))
-    else:
-        if isinstance(chunksize, int):
-            for chunk in chunk_csv_file(path, chunksize):
-                yield Table(chunk)
+def read_csv(path: str):
+    return Table(read_csv_file(path))
 
 
 def read_excel(path: str, sheet_name: Optional[str] = None) -> Table:
@@ -202,3 +257,24 @@ def read_excel(path: str, sheet_name: Optional[str] = None) -> Table:
 
 def read_sqlite(path: str, table_name: str) -> Table:
     return Table(read_sqlite_table(path, table_name))
+
+
+def validate_int_slice(s: slice) -> None:
+    if s.start is not None:
+        if type(s.start) is not int:
+            raise ValueError('slice start must be None or int')
+    if s.stop is not None:
+        if type(s.stop) is not int:
+            raise ValueError('slice stop must be None or int')
+    if s.step is not None:
+        if type(s.step) is not int:
+            raise ValueError('slice step must be None or int')
+
+
+def validate_list_key(l: List) -> None:
+    if not all(isinstance(item, str) for item in l):
+        raise ValueError('All list items bust be str to use as key.')
+
+
+def all_bool(l: List) -> bool:
+    return all(isinstance(item, bool) for item in l)

@@ -1,6 +1,9 @@
-from typing import Any, Callable, Generator, List, Union
+from __future__ import annotations
+from typing import Any, Callable, Collection, Generator, List, Union
 
 from tabulate import tabulate
+
+from tinytable.filter import Filter
 
 
 class Column:
@@ -27,6 +30,30 @@ class Column:
         if self.parent is not None:
             self.parent.edit_value(self.name, index, value)
 
+    def __eq__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x == value)
+
+    def __gt__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x > value)
+
+    def __lt__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x < value)
+
+    def __ge__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x >= value)
+
+    def __le__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x <= value)
+
+    def __ne__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x != value)
+
+    def isin(self, values: Collection) -> Filter:
+        return Filter(self, lambda x: x in values)
+
+    def notin(self, values: Collection) -> Filter:
+        return Filter(self, lambda x: x not in values)
+
     def drop(self):
         """drop Column from parent"""
         if self.parent is not None:
@@ -37,6 +64,9 @@ class Column:
         self.data = [data_type(item) for item in self.data]
         if self.parent is not None:
             self.parent.cast_column_as(self.name, data_type)
+
+    def value_counts(self) -> dict:
+        return {value: self.data.count(value) for value in self.data}
 
 
 def column_dict(data, col: str) -> dict[str, List]:
