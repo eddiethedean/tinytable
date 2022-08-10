@@ -6,13 +6,13 @@ import random
 
 from tabulate import tabulate
 
+from tinytable.functions import column_names, index, only_columns, row_count, row_dict, shape, size, values
 from tinytable.row import Row, iterrows
 from tinytable.column import Column, ittercolumns
-from tinytable.row import row_dict
 from tinytable.csv import read_csv_file
 from tinytable.excel import read_excel_file
 from tinytable.sqlite import read_sqlite_table
-from tinytable.utils import uniques, slice_to_range
+from tinytable.utils import all_bool, uniques, slice_to_range
 from tinytable.filter import Filter
 
 
@@ -21,7 +21,7 @@ class Table:
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data):
+    def __init__(self, data: Mapping[str, Collection] = {}) -> None:
         self.data = data
         self._store_data()
         self._validate()
@@ -34,9 +34,7 @@ class Table:
         self.data[column_name] = list(values)
         
     def __len__(self) -> int:
-        if len(self.data) == 0:
-            return 0
-        return len(self.data[self.columns[0]])
+        return row_count(self.data)
         
     def __repr__(self) -> str:
         return tabulate(self, headers=self.columns, tablefmt='grid')
@@ -97,16 +95,16 @@ class Table:
 
     @property
     def shape(self) -> tuple[int, int]:
-        return len(self.index), len(self.columns)
+        return shape(self.data)
 
     @property
     def size(self) -> int:
-        return self.shape[0] * self.shape[1]
+        return size(self.data)
 
     @property
-    def columns(self) -> List[str]:
+    def columns(self) -> tuple[str]:
         """Column names."""
-        return list(self.data.keys())
+        return column_names(self.data)
 
     @columns.setter
     def columns(self, values: Collection) -> None:
@@ -115,11 +113,11 @@ class Table:
 
     @property
     def index(self) -> Column:
-        return Column(list(range(len(self))), None, self)
+        return Column(index(self.data), None, self)
 
     @property
-    def values(self) -> list[list]:
-        return [list(row.values()) for row in self.iterrows()]
+    def values(self) -> tuple[tuple]:
+        return values(self.data)
 
     def filter(self, f: Filter) -> Table:
         indexes = self.indexes_from_filter(f)
@@ -130,7 +128,7 @@ class Table:
 
     def only_columns(self, column_names: Collection[str]) -> Table:
         """Return new Table with only column_names Columns."""
-        d = {col: self.data[col] for col in column_names}
+        d = only_columns(self.data)
         return Table(d)
 
     def _convert_index(self, index: int) -> int:
@@ -276,5 +274,4 @@ def validate_list_key(l: List) -> None:
         raise ValueError('All list items bust be str to use as key.')
 
 
-def all_bool(l: List) -> bool:
-    return all(isinstance(item, bool) for item in l)
+

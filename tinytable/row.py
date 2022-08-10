@@ -43,10 +43,6 @@ class Row:
         return list(self.data.values())
 
 
-def row_dict(data, index: int):
-    return {col: data[col][index] for col in data}
-
-
 def row_values_generator(row: dict[str, Any]):
     for key in row:
         yield row[key]

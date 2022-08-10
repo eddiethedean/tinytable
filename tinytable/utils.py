@@ -12,8 +12,6 @@ def uniques(values: Iterable) -> List:
             out.append(value)
     return out
 
-# TODO: make slice_to_range work with negative steps
-# slice_to_range(slice(None, None, -1), 4) -> range(-1, 4, -1)
 
 def slice_to_range(s: slice, stop: Optional[int] = None) -> range:
     """Convert an int:int:int slice object to a range object.
@@ -40,3 +38,7 @@ def slice_to_range(s: slice, stop: Optional[int] = None) -> range:
         raise ValueError('stop cannot be None in range')
     
     return range(start, stop, step)
+
+
+def all_bool(l: List) -> bool:
+    return all(isinstance(item, bool) for item in l)
