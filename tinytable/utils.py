@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 
 
 def combine_names_rows(column_names, rows) -> dict[str, List]:
@@ -42,3 +42,11 @@ def slice_to_range(s: slice, stop: Optional[int] = None) -> range:
 
 def all_bool(l: List) -> bool:
     return all(isinstance(item, bool) for item in l)
+
+
+def has_mapping_attrs(obj: Any) -> bool:
+    """Check if object has all Mapping attrs."""
+    mapping_attrs = ['__getitem__', '__iter__', '__len__',
+                     '__contains__', 'keys', 'items', 'values',
+                     'get', '__eq__', '__ne__']
+    return all(hasattr(obj, a) for a in mapping_attrs)

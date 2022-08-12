@@ -2,6 +2,9 @@ from typing import Any, Generator, List
 
 from tabulate import tabulate
 
+from tinytable.functional.row import row_values_generator
+import tinytable.datatypes as dt
+
 
 class Row:
     def __init__(self, data: dict[str, Any], index: int, parent=None):
@@ -43,19 +46,15 @@ class Row:
         return list(self.data.values())
 
 
-def row_values_generator(row: dict[str, Any]):
-    for key in row:
-        yield row[key]
-
-
-def iterrows(data: dict[str, List], parent) -> Generator[Row, None, None]:
+def iterrows(data: dt.TableMapping, parent) -> Generator[tuple[int, Row], None, None]:
     if len(data) == 0:
         return
     i = 0
     while True:
         try:
-            yield Row({col: data[col][i] for col in data}, i, parent)
+            yield i, Row({col: data[col][i] for col in data}, i, parent)
         except IndexError:
             return
         i += 1
+
 

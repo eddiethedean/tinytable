@@ -1,13 +1,15 @@
 from __future__ import annotations
-from typing import Any, Callable, Collection, Generator, List, Union
+from typing import Any, Callable, MutableSequence, Generator, List, Sequence, Union
 
 from tabulate import tabulate
+import tinytable.datatypes as dt
 
 from tinytable.filter import Filter
+from tinytable.functional.table import copy_table
 
 
 class Column:
-    def __init__(self, data: List, name: Union[str, None], parent=None):
+    def __init__(self, data: Sequence, name: Union[str, None], parent=None):
         self.data = list(data)
         self.name = name
         self.parent = None
@@ -48,10 +50,10 @@ class Column:
     def __ne__(self, value: Any) -> Filter:
         return Filter(self, lambda x: x != value)
 
-    def isin(self, values: Collection) -> Filter:
+    def isin(self, values: MutableSequence) -> Filter:
         return Filter(self, lambda x: x in values)
 
-    def notin(self, values: Collection) -> Filter:
+    def notin(self, values: MutableSequence) -> Filter:
         return Filter(self, lambda x: x not in values)
 
     def drop(self):
@@ -69,10 +71,18 @@ class Column:
         return {value: self.data.count(value) for value in self.data}
 
 
-def column_dict(data, col: str) -> dict[str, List]:
-    return {col: data[col]}
-
-
-def ittercolumns(data: dict[str, List], parent) -> Generator[Column, None, None]:
+def itercolumns(data: dt.TableMapping, parent) -> Generator[Column, None, None]:
     for col in data.keys():
         yield Column(data[col], col, parent)
+
+
+def iteritems(data: dt.TableMapping, parent) -> Generator[tuple[str, Column], None, None]:
+    for col in data.keys():
+        yield col, Column(data[col], col, parent)
+
+
+def cast_column_as(data: dt.TableMapping, column_name: str, data_type: Callable) -> dt.TableMapping:
+    """Return a new dict with named column cast as data_type."""
+    new_data = copy_table(data)
+    new_data[column_name] = [data_type(value) for value in new_data[column_name]]
+    return new_data
