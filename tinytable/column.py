@@ -5,7 +5,9 @@ from tabulate import tabulate
 import tinytable.datatypes as dt
 
 from tinytable.filter import Filter
+from tinytable.functional.group import groupby
 from tinytable.functional.table import copy_table
+from tinytable.group import Group
 
 
 class Column:
@@ -35,6 +37,9 @@ class Column:
     def __eq__(self, value: Any) -> Filter:
         return Filter(self, lambda x: x == value)
 
+    def __ne__(self, value: Any) -> Filter:
+        return Filter(self, lambda x: x != value)
+
     def __gt__(self, value: Any) -> Filter:
         return Filter(self, lambda x: x > value)
 
@@ -46,9 +51,6 @@ class Column:
 
     def __le__(self, value: Any) -> Filter:
         return Filter(self, lambda x: x <= value)
-
-    def __ne__(self, value: Any) -> Filter:
-        return Filter(self, lambda x: x != value)
 
     def isin(self, values: MutableSequence) -> Filter:
         return Filter(self, lambda x: x in values)
@@ -69,6 +71,14 @@ class Column:
 
     def value_counts(self) -> dict:
         return {value: self.data.count(value) for value in self.data}
+
+    def sum(self) -> Union[float, int]:
+        return sum(self.data)
+
+    def groupby(self) -> Group:
+        name = str(self.name)
+        groups = groupby({name: self.data}, by=str(name))
+        return Group(groups, by=name)
 
 
 def itercolumns(data: dt.TableMapping, parent) -> Generator[Column, None, None]:

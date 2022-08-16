@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import Iterable, List, Mapping, Optional, Union, Iterator
+from typing import Collection, Iterable, List, Mapping, Optional, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
+from tinytable.functional.filter import filter_by_indexes, indexes_from_filter
 
 
 import tinytable.functional.table as func
 import tinytable.functional.inplace as ip
 import tinytable.datatypes as dt
 import tinytable.column as column
+from tinytable.group import Group
 import tinytable.row as row
 
 from tinytable.csv import read_csv_file
@@ -16,6 +18,7 @@ from tinytable.excel import read_excel_file
 from tinytable.sqlite import read_sqlite_table
 from tinytable.utils import all_bool, slice_to_range
 from tinytable.filter import Filter
+from tinytable.functional.group import count_data, groupby, sum_data
 
 
 
@@ -128,11 +131,8 @@ class Table:
         return func.values(self.data)
 
     def filter(self, f: Filter) -> Table:
-        indexes = self.indexes_from_filter(f)
+        indexes = indexes_from_filter(f)
         return self.filter_by_indexes(indexes)
-
-    def indexes_from_filter(self, f: Filter) -> List[int]:
-        return [i for i, b in enumerate(f) if b]
 
     def only_columns(self, column_names: MutableSequence[str]) -> Table:
         """Return new Table with only column_names Columns."""
@@ -259,13 +259,21 @@ class Table:
 
     def filter_by_indexes(self, indexes: MutableSequence[int]) -> Table:
         """return only rows in indexes"""
-        d = func.filter_by_indexes(self.data, indexes)
-        return Table(d)
+        return Table(filter_by_indexes(self.data, indexes))
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
         return Table(func.sample(self.data, n, random_state))
-    
+
+    def groupby(self, by: Union[str, Collection]) -> Group:
+        return Group([(value, Table(data)) for value, data in groupby(self.data, by)], by)
+
+    def sum(self) -> dt.RowDict:
+        return sum_data(self.data)
+
+    def count(self) -> dt.RowDict:
+        return count_data(self.data)
+
 
 def read_csv(path: str):
     return Table(read_csv_file(path))
