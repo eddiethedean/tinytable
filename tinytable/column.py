@@ -11,17 +11,20 @@ from tinytable.group import Group
 
 
 class Column:
-    def __init__(self, data: Sequence, name: Union[str, None], parent=None):
+    def __init__(self, data: Sequence, name: Union[str, None], parent=None, labels=None):
         self.data = list(data)
         self.name = name
-        self.parent = None
+        self.parent = parent
+        self.labels = labels
+
         
     def __len__(self) -> int:
         return len(self.data)
     
     def __repr__(self) -> str:
         header = 'index' if self.name is None else self.name
-        return tabulate({header: self.data}, headers=[header], tablefmt='grid', showindex=True)
+        index = True if self.labels is None else self.labels
+        return tabulate({header: self.data}, headers=[header], tablefmt='grid', showindex=index)
     
     def __iter__(self):
         return iter(self.data)
@@ -81,9 +84,9 @@ class Column:
         return Group(groups, by=name)
 
 
-def itercolumns(data: dt.TableMapping, parent) -> Generator[Column, None, None]:
+def itercolumns(data: dt.TableMapping, parent, labels=None) -> Generator[Column, None, None]:
     for col in data.keys():
-        yield Column(data[col], col, parent)
+        yield Column(data[col], col, parent, labels)
 
 
 def iteritems(data: dt.TableMapping, parent) -> Generator[tuple[str, Column], None, None]:

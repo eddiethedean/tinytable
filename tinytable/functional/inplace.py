@@ -1,4 +1,4 @@
-from typing import Any, Mapping, MutableSequence
+from typing import Any, List, Mapping, MutableSequence, Union
 
 import tinytable.datatypes as dt
 import tinytable.functional.table as func
@@ -32,6 +32,11 @@ def drop_row(data: dt.TableMapping, index: int) -> None:
     """Remove index row from data."""
     for col in func.column_names(data):
         data[col].pop(index)
+
+
+def drop_label(labels: Union[None, List], index) -> None:
+    if labels is not None:
+        labels.pop(index)
 
 
 def drop_column(data: dt.TableMapping, column_name: str) -> None:

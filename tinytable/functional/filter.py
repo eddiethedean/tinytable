@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List, Collection
+from typing import Callable, Iterable, List, Collection, Sequence
 from tinytable.datatypes import TableMapping
 
 
@@ -13,10 +13,15 @@ def indexes_from_filter(f: TableFilter) -> List[int]:
     return [i for i, b in enumerate(f) if b]
 
 
-def filter_by_indexes(data: TableMapping, indexes: Collection[int]) -> TableMapping:
-    """return only rows in indexes"""
-    return {col: [values[i] for i in indexes] for col, values in data.items()}
-    
+def filter_list_by_indexes(values: Sequence, indexes: Sequence[int]) -> List:
+    """Return only values in indexes."""
+    return [values[i] for i in indexes]
+
+
+def filter_by_indexes(data: TableMapping, indexes: Sequence[int]) -> TableMapping:
+    """Return only rows in indexes"""
+    return {col: filter_list_by_indexes(values, indexes) for col, values in data.items()}
+
 
 def filter_data(data: TableMapping, f: TableFilter) -> TableMapping:
     indexes = indexes_from_filter(f)

@@ -1,9 +1,10 @@
 from __future__ import annotations
+import copy
 from typing import Collection, Iterable, List, Mapping, Optional, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
-from tinytable.functional.filter import filter_by_indexes, indexes_from_filter
+from tinytable.functional.filter import filter_by_indexes, filter_list_by_indexes, indexes_from_filter
 
 
 import tinytable.functional.table as func
@@ -28,10 +29,11 @@ class Table:
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data: dt.TableMapping = {}) -> None:
+    def __init__(self, data: dt.TableMapping = {}, labels=None) -> None:
         self.data = data
         self._store_data()
         self._validate()
+        self.labels = labels if labels is None else list(labels)
 
     def _store_data(self):
         for col in self.data:
@@ -48,7 +50,8 @@ class Table:
         return func.row_count(self.data)
         
     def __repr__(self) -> str:
-        return tabulate(self, headers=self.columns, tablefmt='grid')
+        index = True if self.labels is None else self.labels
+        return tabulate(self, headers=self.columns, tablefmt='grid', showindex=index)
     
     def __iter__(self) -> Iterator[str]:
         return iter(self.data)
@@ -86,6 +89,15 @@ class Table:
         if isinstance(key, Filter):
             # tbl[tbl['age'] >= 18] -> Table
             return self.filter(key)
+        if isinstance(key, tuple):
+            # tble[1, 2] or tbl[(1, 2)] -> labeled Row
+            if self.labels is None:
+                raise ValueError('Table must have labels to use tuple as key.')
+            else:
+                if key not in self.labels:
+                    raise KeyError('tuple key is not in Table labels.')
+                index = self.labels.index(key)
+                return self[index]
         raise TypeError('key must be str for column selection, int for row selection or slice for subset of Table rows.')
     
     def __setitem__(self, key: Union[str, int], values: MutableSequence) -> None:
@@ -124,7 +136,7 @@ class Table:
 
     @property
     def index(self) -> column.Column:
-        return column.Column(func.index(self.data), None, self)
+        return column.Column(func.index(self.data), None, self, self.labels)
 
     @property
     def values(self) -> tuple[tuple]:
@@ -137,7 +149,7 @@ class Table:
     def only_columns(self, column_names: MutableSequence[str]) -> Table:
         """Return new Table with only column_names Columns."""
         d = func.only_columns(self.data, column_names)
-        return Table(d)
+        return Table(d, self.labels)
 
     def _convert_index(self, index: int) -> int:
         if index < 0:
@@ -161,33 +173,38 @@ class Table:
                 raise ValueError('All columns must be of the same length')
             count = col_count
         return True
+
+    def _get_label(self, index: int) -> Union[None, List]:
+        return None if self.labels is None else self.labels[index]
    
     def row(self, index: int) -> row.Row:
-        return row.Row(func.row_dict(self.data, index), index, self)
+        label = self._get_label(index)
+        return row.Row(func.row_dict(self.data, index), index, self, label)
 
     def column(self, column_name: str) -> column.Column:
-        return column.Column(func.column_values(self.data, column_name), column_name, self)
+        return column.Column(func.column_values(self.data, column_name), column_name, self, self.labels)
 
     def drop_column(self, column_name: str, inplace=True) -> Union[None, Table]:
         if inplace:
             ip.drop_column(self.data, column_name)
         else:
-            return Table(func.drop_column(self.data, column_name))
+            return Table(func.drop_column(self.data, column_name), self.labels)
 
     def drop_row(self, index: int, inplace=True) -> Union[None, Table]:
         if inplace:
             ip.drop_row(self.data, index)
+            ip.drop_label(self.labels, index)
         else:
-            return Table(func.drop_row(self.data, index))
+            return Table(func.drop_row(self.data, index), func.drop_label(self.labels, index))
 
     def keys(self) -> tuple[str]:
         return self.columns
     
     def itercolumns(self) -> Generator[column.Column, None, None]:
-        return column.itercolumns(self.data, self)
+        return column.itercolumns(self.data, self, self.labels)
             
     def iterrows(self) -> Generator[tuple[int, row.Row], None, None]:
-        return row.iterrows(self.data, self)
+        return row.iterrows(self.data, self, self.labels)
 
     def iteritems(self) -> Generator[tuple[str, column.Column], None, None]:
         return column.iteritems(self.data, self)
@@ -206,7 +223,7 @@ class Table:
                 data = func.edit_row_items(self.data, index, values)
             elif isinstance(values, MutableSequence):
                 data = func.edit_row_values(self.data, index, values)
-            return Table(data)
+            return Table(data, copy.copy(self.labels))
             
     def edit_column(self, column_name: str, values: MutableSequence, inplace=True) ->Union[None, Table]:
         return self._store_column(column_name, values, inplace)
@@ -215,12 +232,12 @@ class Table:
         if inplace:
             ip.edit_value(self.data, column_name, index, value)
         else:
-            return Table(func.edit_value(self.data, column_name, index, value))
+            return Table(func.edit_value(self.data, column_name, index, value), copy.copy(self.labels))
 
     def copy(self, deep=False) -> Table:
         if deep:
-             return Table(func.deepcopy_table(self.data))
-        return Table(func.copy_table(self.data))
+             return Table(func.deepcopy_table(self.data), copy.deepcopy(self.labels))
+        return Table(func.copy_table(self.data), copy.copy(self.labels))
 
     def cast_column_as(self, column_name: str, data_type: Callable) -> None:
         self.data[column_name] = [data_type(value) for value in self.data[column_name]]
@@ -245,11 +262,17 @@ class Table:
         """Save Table in sqlite database."""
         ...
 
+    def label_head(self, n: int = 5) -> Union[None, List]:
+        return None if self.labels is None else self.labels[:5]
+
+    def label_tail(self, n: int = 5) -> Union[None, List]:
+        return None if self.labels is None else self.labels[5:]
+
     def head(self, n: int = 5) -> Table:
-        return Table(func.head(self.data, n))
+        return Table(func.head(self.data, n), self.label_head(n))
 
     def tail(self, n: int = 5) -> Table:
-        return Table(func.tail(self.data, n))
+        return Table(func.tail(self.data, n), self.label_tail(n))
 
     def nunique(self) -> dict[str, int]:
         """Count number of distinct values in each column.
@@ -259,11 +282,14 @@ class Table:
 
     def filter_by_indexes(self, indexes: MutableSequence[int]) -> Table:
         """return only rows in indexes"""
-        return Table(filter_by_indexes(self.data, indexes))
+        labels = None if self.labels is None else filter_list_by_indexes(self.labels, indexes)
+        return Table(filter_by_indexes(self.data, indexes), labels=labels)
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
-        return Table(func.sample(self.data, n, random_state))
+        indexes = func.sample_indexes(self.data, n, random_state)
+        labels = None if self.labels is None else filter_list_by_indexes(self.labels, indexes)
+        return Table(filter_by_indexes(self.data, indexes), labels=labels)
 
     def groupby(self, by: Union[str, Collection]) -> Group:
         return Group([(value, Table(data)) for value, data in groupby(self.data, by)], by)

@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Any, MutableSequence, Generator, Optional, Mapping
+from typing import Any, List, MutableSequence, Generator, Optional, Mapping, Union
 
 import tinytable.datatypes as dt
 import tinytable.utils as utils
@@ -140,6 +140,13 @@ def sample(data: dt.TableMapping, n: int, random_state: Optional[int] = None) ->
     return filter_by_indexes(data, indexes)
 
 
+def sample_indexes(data: dt.TableMapping, n: int, random_state: Optional[int] = None) -> List[int]:
+    """return random sample of n indexes"""
+    if random_state is not None:
+        random.seed(random_state)
+    return random.sample(range(row_count(data)), n)
+
+
 def nunique(data: dt.TableMapping) -> dict[str, int]:
     """Count number of distinct values in each column.
        Return dict with number of distinct values.
@@ -193,6 +200,12 @@ def drop_row(data: dt.TableMapping, index: int) -> dt.TableMapping:
     new_data = copy_table(data)
     inplace.drop_row(data, index)
     return new_data
+
+
+def drop_label(labels: Union[None, List], index: int) -> Union[None, List]:
+    new_labels = copy.copy(labels)
+    inplace.drop_label(new_labels, index)
+    return new_labels
 
 
 def drop_column(data: dt.TableMapping, column_name: str) -> dt.TableMapping:

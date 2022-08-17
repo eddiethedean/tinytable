@@ -3,7 +3,7 @@ from typing import Callable, Collection, Iterable, List, Union
 from tinytable.datatypes import RowDict, TableMapping
 from tinytable.functional.filter import column_filter, filter_data
 
-from tinytable.utils import uniques
+from tinytable.utils import combine_names_rows, row_dicts_to_data, uniques
 
 
 TableFilter = Iterable[bool]
@@ -44,23 +44,24 @@ def _keys(key, by) -> dict:
     return keys
 
 
-def aggregate_groups(groups: List[tuple], by: Collection[str], func: Callable, tuplename: str) -> dict:
-    rows = {}
+def aggregate_groups(groups: List[tuple], by: Collection[str], func: Callable, tuplename: str) -> tuple[List, dict]:
+    labels = []
+    rows = []
     for key, data in groups:
         row = func(data)
         if len(row):
-            Agg = namedtuple(field_names=row.keys(), typename=tuplename)
             GroupbyKey = namedtuple(field_names=by, typename='GroupbyKey')
             keys = _keys(key, by)
-            rows[GroupbyKey(*keys.values())] = Agg(*row.values())
-    return rows
+            labels.append(GroupbyKey(*keys.values()))
+            rows.append(row)
+    return labels, row_dicts_to_data(rows)
 
 
-def sum_groups(groups: List[tuple], by: Collection[str]) -> dict:
+def sum_groups(groups: List[tuple], by: Collection[str]) -> tuple[List, dict]:
     return aggregate_groups(groups, by, sum_data, 'Sums')
 
 
-def count_groups(groups: List[tuple], by: Collection[str]) -> dict:
+def count_groups(groups: List[tuple], by: Collection[str]) -> tuple[List, dict]:
     return aggregate_groups(groups, by, count_data, 'Counts')
 
 
