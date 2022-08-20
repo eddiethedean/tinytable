@@ -2,8 +2,7 @@ from __future__ import annotations
 from typing import Any, Callable, MutableSequence, Generator, List, Sequence, Union
 
 from tabulate import tabulate
-from tinytim.functional.group import groupby
-from tinytim.functional.table import copy_table
+import tinytim.functions as tim
 
 import tinytable.datatypes as dt
 from tinytable.filter import Filter
@@ -80,7 +79,7 @@ class Column:
 
     def groupby(self) -> Group:
         name = str(self.name)
-        groups = groupby({name: self.data}, by=str(name))
+        groups = tim.groupby({name: self.data}, by=str(name))
         return Group(groups, by=name)
 
 
@@ -96,6 +95,6 @@ def iteritems(data: dt.TableMapping, parent) -> Generator[tuple[str, Column], No
 
 def cast_column_as(data: dt.TableMapping, column_name: str, data_type: Callable) -> dt.TableMapping:
     """Return a new dict with named column cast as data_type."""
-    new_data = copy_table(data)
+    new_data = tim.copy_table(data)
     new_data[column_name] = [data_type(value) for value in new_data[column_name]]
     return new_data

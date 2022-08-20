@@ -1,7 +1,7 @@
 import csv
 from typing import Generator, List, Union
 
-from tinytim.functional.utils import combine_names_rows
+import tinytim.functions as tim
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:
@@ -47,12 +47,12 @@ def chunk_csv_file(
             else:
                 rows.append([convert_str(v) for v in row])
             if i == chunk_end:
-                yield combine_names_rows(column_names, rows)
+                yield tim.combine_names_rows(column_names, rows)
                 rows = []
                 chunk_end += chunksize
         else:
             if len(rows) > 0:
-                yield combine_names_rows(column_names, rows)
+                yield tim.combine_names_rows(column_names, rows)
 
 
 def read_csv_file(
@@ -75,4 +75,4 @@ def read_csv_file(
                 first = False
             else:
                 rows.append([convert_str(v) for v in row])
-        return combine_names_rows(column_names, rows)
+        return tim.combine_names_rows(column_names, rows)

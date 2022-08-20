@@ -1,7 +1,7 @@
 from typing import Any, Generator, List
 
 from tabulate import tabulate
-from tinytim.functional.row import row_values_generator
+import tinytim.functions as tim
 
 import tinytable.datatypes as dt
 
@@ -17,7 +17,7 @@ class Row:
         return len(self.data)
     
     def __iter__(self):
-        return row_values_generator(self.data)
+        return tim.row_values_generator(self.data)
     
     def __repr__(self) -> str:
         index = self.index if self.label is None else self.label
