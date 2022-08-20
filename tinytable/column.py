@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, MutableMapping, MutableSequence, Generator, List, Sequence, Union
+from typing import Any, Callable, MutableMapping, MutableSequence, Generator, Sequence, Union
 
 from tabulate import tabulate
 import tinytim.functions as tim

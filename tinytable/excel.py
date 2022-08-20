@@ -7,7 +7,6 @@ from openpyxl.chartsheet.chartsheet import Chartsheet
 import tinytim.functions as tim
 
 
-
 Sheet = Union[Worksheet, ReadOnlyWorksheet, Chartsheet]
 WorkSheet = Union[Worksheet, ReadOnlyWorksheet]
 

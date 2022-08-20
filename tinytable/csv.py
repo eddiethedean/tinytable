@@ -1,5 +1,5 @@
 import csv
-from typing import Generator, List, Union
+from typing import Generator, Union
 
 import tinytim.functions as tim
 
