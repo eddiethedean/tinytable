@@ -1,7 +1,7 @@
 import sqlite3
 from typing import List
 
-from tinytable.utils import combine_names_rows
+from tinytim.functional.utils import combine_names_rows
 
 
 def _table_names(conn) -> List[str]:

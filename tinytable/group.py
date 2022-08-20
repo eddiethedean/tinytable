@@ -1,7 +1,8 @@
 from collections import namedtuple
 from typing import Collection, List, Union
 
-from tinytable.functional.group import count_groups, sum_groups
+from tinytim.functional.group import count_groups, sum_groups
+
 import tinytable as tt
 
 

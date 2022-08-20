@@ -4,11 +4,11 @@ import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.chartsheet.chartsheet import Chartsheet
+from tinytim.functional.utils import combine_names_rows
+
 
 Sheet = Union[Worksheet, ReadOnlyWorksheet, Chartsheet]
 WorkSheet = Union[Worksheet, ReadOnlyWorksheet]
-
-from tinytable.utils import combine_names_rows
 
 
 class WorkBook:

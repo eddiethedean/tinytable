@@ -4,24 +4,20 @@ from typing import Collection, Iterable, List, Mapping, Optional, Union, Iterato
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
-from tinytable.functional.filter import filter_by_indexes, filter_list_by_indexes, indexes_from_filter
+from tinytim.functional.filter import filter_by_indexes, filter_list_by_indexes, indexes_from_filter
+import tinytim.functional.table as func
+import tinytim.functional.inplace as ip
+from tinytim.functional.group import count_data, groupby, sum_data
+from tinytim.functional.utils import all_bool, slice_to_range
 
-
-import tinytable.functional.table as func
-import tinytable.functional.inplace as ip
 import tinytable.datatypes as dt
 import tinytable.column as column
 from tinytable.group import Group
 import tinytable.row as row
-
 from tinytable.csv import read_csv_file
 from tinytable.excel import read_excel_file
 from tinytable.sqlite import read_sqlite_table
-from tinytable.utils import all_bool, slice_to_range
 from tinytable.filter import Filter
-from tinytable.functional.group import count_data, groupby, sum_data
-
-
 
 
 class Table:
@@ -96,7 +92,9 @@ class Table:
             else:
                 if key not in self.labels:
                     raise KeyError('tuple key is not in Table labels.')
-                index = self.labels.index(key)
+                labels = self.labels
+                if isinstance(labels, list):
+                    index = labels.index(key)
                 return self[index]
         raise TypeError('key must be str for column selection, int for row selection or slice for subset of Table rows.')
     

@@ -1,7 +1,7 @@
 import csv
 from typing import Generator, List, Union
 
-from tinytable.utils import combine_names_rows
+from tinytim.functional.utils import combine_names_rows
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:

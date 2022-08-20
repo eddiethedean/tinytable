@@ -1,8 +1,8 @@
 from typing import Any, Generator, List
 
 from tabulate import tabulate
+from tinytim.functional.row import row_values_generator
 
-from tinytable.functional.row import row_values_generator
 import tinytable.datatypes as dt
 
 

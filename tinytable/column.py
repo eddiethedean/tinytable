@@ -2,11 +2,11 @@ from __future__ import annotations
 from typing import Any, Callable, MutableSequence, Generator, List, Sequence, Union
 
 from tabulate import tabulate
-import tinytable.datatypes as dt
+from tinytim.functional.group import groupby
+from tinytim.functional.table import copy_table
 
+import tinytable.datatypes as dt
 from tinytable.filter import Filter
-from tinytable.functional.group import groupby
-from tinytable.functional.table import copy_table
 from tinytable.group import Group
 
 
