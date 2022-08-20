@@ -1,9 +1,7 @@
-from typing import Any, Generator, List
+from typing import Any, Generator, List, MutableMapping
 
 from tabulate import tabulate
 import tinytim.functions as tim
-
-import tinytable.datatypes as dt
 
 
 class Row:
@@ -48,7 +46,7 @@ class Row:
         return list(self.data.values())
 
 
-def iterrows(data: dt.TableMapping, parent, labels=None) -> Generator[tuple[int, Row], None, None]:
+def iterrows(data: MutableMapping, parent, labels=None) -> Generator[tuple[int, Row], None, None]:
     if len(data) == 0:
         return
     i = 0

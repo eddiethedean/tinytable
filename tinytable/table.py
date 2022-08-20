@@ -1,12 +1,11 @@
 from __future__ import annotations
 import copy
-from typing import Collection, Iterable, List, Mapping, Optional, Union, Iterator
+from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
 import tinytim.functions as tim
 
-import tinytable.datatypes as dt
 import tinytable.column as column
 from tinytable.group import Group
 import tinytable.row as row
@@ -21,7 +20,7 @@ class Table:
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data: dt.TableMapping = {}, labels=None) -> None:
+    def __init__(self, data: MutableMapping = {}, labels=None) -> None:
         self.data = data
         self._store_data()
         self._validate()
@@ -288,10 +287,10 @@ class Table:
     def groupby(self, by: Union[str, Collection]) -> Group:
         return Group([(value, Table(data)) for value, data in tim.groupby(self.data, by)], by)
 
-    def sum(self) -> dt.RowDict:
+    def sum(self) -> dict:
         return tim.sum_data(self.data)
 
-    def count(self) -> dt.RowDict:
+    def count(self) -> dict:
         return tim.count_data(self.data)
 
 
