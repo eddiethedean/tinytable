@@ -1,0 +1,1 @@
+from tinytim.features import shape, size, column_names, head, tail, row_count, column_names, index, values, column_values

@@ -1,7 +1,9 @@
 import csv
-from typing import Generator, Union
+from typing import Generator, MutableMapping, Union
 
 import tinytim as tim
+from tinytable.functional.features import column_names
+from tinytable.functional.rows import itertuples
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:
@@ -76,3 +78,18 @@ def read_csv_file(
             else:
                 rows.append([convert_str(v) for v in row])
         return tim.utils.combine_names_rows(column_names, rows)
+
+
+def data_to_csv_file(
+    data: MutableMapping,
+    path: str,
+    newline='',
+    encoding='utf-8-sig'
+) -> None:
+    """Write data to csv file at path."""
+    names = column_names(data)
+    rows = itertuples(data)
+    with open(path, 'w', encoding=encoding, newline=newline) as f:
+        writer = csv.writer(f)
+        writer.writerow(names)
+        writer.writerows(rows)
