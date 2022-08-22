@@ -1,6 +1,6 @@
-from typing import Any, MutableSequence, MutableMapping
+from typing import Any, MutableSequence, MutableMapping, Dict
 
 
 TableMapping = MutableMapping[str, MutableSequence]
-TableDict = dict[str, MutableSequence]
-RowDict = dict[str, Any]
+TableDict = Dict[str, MutableSequence]
+RowDict = Dict[str, Any]

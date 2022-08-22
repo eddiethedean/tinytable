@@ -1,11 +1,11 @@
-from typing import Any, Generator, List, MutableMapping
+from typing import Any, Generator, List, MutableMapping, Dict, Tuple
 
 from tabulate import tabulate
 import tinytim as tim
 
 
 class Row:
-    def __init__(self, data: dict[str, Any], index: int, parent=None, label=None):
+    def __init__(self, data: Dict[str, Any], index: int, parent=None, label=None):
         self.data = data
         self.index = index
         self.parent = parent
@@ -46,7 +46,7 @@ class Row:
         return list(self.data.values())
 
 
-def iterrows(data: MutableMapping, parent, labels=None) -> Generator[tuple[int, Row], None, None]:
+def iterrows(data: MutableMapping, parent, labels=None) -> Generator[Tuple[int, Row], None, None]:
     if len(data) == 0:
         return
     i = 0
