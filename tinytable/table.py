@@ -4,7 +4,7 @@ from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
-import tinytim.functions as tim
+import tinytim as tim
 
 import tinytable.column as column
 from tinytable.group import Group
@@ -33,12 +33,12 @@ class Table:
     def _store_column(self, column_name: str, values: Iterable, inplace=True) -> Union[None, Table]:
         values = list(values)
         if inplace:
-            tim.edit_column(self.data, column_name, values)
+            tim.edit.edit_column(self.data, column_name, values)
         else:
-            return Table(tim.edit_column(self.data, column_name, values))
+            return Table(tim.edit.edit_column(self.data, column_name, values))
         
     def __len__(self) -> int:
-        return tim.row_count(self.data)
+        return tim.features.row_count(self.data)
         
     def __repr__(self) -> str:
         index = True if self.labels is None else self.labels
@@ -69,9 +69,9 @@ class Table:
         # tbl[1:4] -> Table
         if isinstance(key, slice):
             validate_int_slice(key)
-            return self.filter_by_indexes(list(tim.slice_to_range(key, len(self))))
+            return self.filter_by_indexes(list(tim.utils.slice_to_range(key, len(self))))
         if isinstance(key, list):
-            if tim.all_bool(key):
+            if tim.utils.all_bool(key):
                 # tbl[[True, False, True, True]] -> Table
                 return self.filter(key)
             # tbl[['id', 'name']] -> Table
@@ -111,16 +111,16 @@ class Table:
 
     @property
     def shape(self) -> tuple[int, int]:
-        return tim.shape(self.data)
+        return tim.features.shape(self.data)
 
     @property
     def size(self) -> int:
-        return tim.size(self.data)
+        return tim.features.size(self.data)
 
     @property
     def columns(self) -> tuple[str]:
         """Column names."""
-        return tim.column_names(self.data)
+        return tim.features.column_names(self.data)
 
     @columns.setter
     def columns(self, values: MutableSequence) -> None:
@@ -129,19 +129,19 @@ class Table:
 
     @property
     def index(self) -> column.Column:
-        return column.Column(tim.index(self.data), None, self, self.labels)
+        return column.Column(tim.features.index(self.data), None, self, self.labels)
 
     @property
     def values(self) -> tuple[tuple]:
-        return tim.values(self.data)
+        return tim.rows.values(self.data)
 
     def filter(self, f: Filter) -> Table:
-        indexes = tim.indexes_from_filter(f)
+        indexes = tim.filter.indexes_from_filter(f)
         return self.filter_by_indexes(indexes)
 
     def only_columns(self, column_names: MutableSequence[str]) -> Table:
         """Return new Table with only column_names Columns."""
-        d = tim.only_columns(self.data, column_names)
+        d = tim.filter.only_columns(self.data, column_names)
         return Table(d, self.labels)
 
     def _convert_index(self, index: int) -> int:
@@ -172,23 +172,23 @@ class Table:
    
     def row(self, index: int) -> row.Row:
         label = self._get_label(index)
-        return row.Row(tim.row_dict(self.data, index), index, self, label)
+        return row.Row(tim.rows.row_dict(self.data, index), index, self, label)
 
     def column(self, column_name: str) -> column.Column:
-        return column.Column(tim.column_values(self.data, column_name), column_name, self, self.labels)
+        return column.Column(tim.features.column_values(self.data, column_name), column_name, self, self.labels)
 
     def drop_column(self, column_name: str, inplace=True) -> Union[None, Table]:
         if inplace:
-            tim.drop_column_inplace(self.data, column_name)
+            tim.edit.drop_column_inplace(self.data, column_name)
         else:
-            return Table(tim.drop_column(self.data, column_name), self.labels)
+            return Table(tim.edit.drop_column(self.data, column_name), self.labels)
 
     def drop_row(self, index: int, inplace=True) -> Union[None, Table]:
         if inplace:
-            tim.drop_row_inplace(self.data, index)
-            tim.drop_label_inplace(self.labels, index)
+            tim.edit.drop_row_inplace(self.data, index)
+            tim.edit.drop_label_inplace(self.labels, index)
         else:
-            return Table(tim.drop_row(self.data, index), tim.drop_label(self.labels, index))
+            return Table(tim.edit.drop_row(self.data, index), tim.edit.drop_label(self.labels, index))
 
     def keys(self) -> tuple[str]:
         return self.columns
@@ -203,19 +203,19 @@ class Table:
         return column.iteritems(self.data, self)
 
     def itertuples(self) -> Generator[tuple, None, None]:
-        return tim.itertuples(self.data)
+        return tim.rows.itertuples(self.data)
     
     def edit_row(self, index: int, values: Union[Mapping, MutableSequence], inplace=True) -> Union[None, Table]:
         if inplace:
             if isinstance(values, Mapping):
-                tim.edit_row_items_inplace(self.data, index, values)
+                tim.edit.edit_row_items_inplace(self.data, index, values)
             elif isinstance(values, MutableSequence):
-                tim.edit_row_values_inplace(self.data, index, values)
+                tim.edit.edit_row_values_inplace(self.data, index, values)
         else:
             if isinstance(values, Mapping):
-                data = tim.edit_row_items(self.data, index, values)
+                data = tim.edit.edit_row_items(self.data, index, values)
             elif isinstance(values, MutableSequence):
-                data = tim.edit_row_values(self.data, index, values)
+                data = tim.edit.edit_row_values(self.data, index, values)
             return Table(data, copy.copy(self.labels))
             
     def edit_column(self, column_name: str, values: MutableSequence, inplace=True) ->Union[None, Table]:
@@ -223,14 +223,14 @@ class Table:
 
     def edit_value(self, column_name: str, index: int, value: Any, inplace=True) -> Union[None, Table]:
         if inplace:
-            tim.edit_value_inplace(self.data, column_name, index, value)
+            tim.edit.edit_value_inplace(self.data, column_name, index, value)
         else:
-            return Table(tim.edit_value(self.data, column_name, index, value), copy.copy(self.labels))
+            return Table(tim.edit.edit_value(self.data, column_name, index, value), copy.copy(self.labels))
 
     def copy(self, deep=False) -> Table:
         if deep:
-             return Table(tim.deepcopy_table(self.data), copy.deepcopy(self.labels))
-        return Table(tim.copy_table(self.data), copy.copy(self.labels))
+             return Table(tim.copy.deepcopy_table(self.data), copy.deepcopy(self.labels))
+        return Table(tim.copy.copy_table(self.data), copy.copy(self.labels))
 
     def cast_column_as(self, column_name: str, data_type: Callable) -> None:
         self.data[column_name] = [data_type(value) for value in self.data[column_name]]
@@ -262,36 +262,36 @@ class Table:
         return None if self.labels is None else self.labels[5:]
 
     def head(self, n: int = 5) -> Table:
-        return Table(tim.head(self.data, n), self.label_head(n))
+        return Table(tim.features.head(self.data, n), self.label_head(n))
 
     def tail(self, n: int = 5) -> Table:
-        return Table(tim.tail(self.data, n), self.label_tail(n))
+        return Table(tim.features.tail(self.data, n), self.label_tail(n))
 
     def nunique(self) -> dict[str, int]:
         """Count number of distinct values in each column.
            Return dict with number of distinct values.
         """
-        return tim.nunique(self.data)
+        return tim.utils.nunique(self.data)
 
     def filter_by_indexes(self, indexes: MutableSequence[int]) -> Table:
         """return only rows in indexes"""
-        labels = None if self.labels is None else tim.filter_list_by_indexes(self.labels, indexes)
-        return Table(tim.filter_by_indexes(self.data, indexes), labels=labels)
+        labels = None if self.labels is None else tim.filter.filter_list_by_indexes(self.labels, indexes)
+        return Table(tim.filter.filter_by_indexes(self.data, indexes), labels=labels)
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
-        indexes = tim.sample_indexes(self.data, n, random_state)
-        labels = None if self.labels is None else tim.filter_list_by_indexes(self.labels, indexes)
-        return Table(tim.filter_by_indexes(self.data, indexes), labels=labels)
+        indexes = tim.filter.sample_indexes(self.data, n, random_state)
+        labels = None if self.labels is None else tim.filter.filter_list_by_indexes(self.labels, indexes)
+        return Table(tim.filter.filter_by_indexes(self.data, indexes), labels=labels)
 
     def groupby(self, by: Union[str, Collection]) -> Group:
-        return Group([(value, Table(data)) for value, data in tim.groupby(self.data, by)], by)
+        return Group([(value, Table(data)) for value, data in tim.group.groupby(self.data, by)], by)
 
     def sum(self) -> dict:
-        return tim.sum_data(self.data)
+        return tim.group.sum_data(self.data)
 
     def count(self) -> dict:
-        return tim.count_data(self.data)
+        return tim.group.count_data(self.data)
 
 
 def read_csv(path: str):

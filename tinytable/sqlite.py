@@ -1,7 +1,7 @@
 import sqlite3
 from typing import List
 
-import tinytim.functions as tim
+import tinytim as tim
 
 
 def _table_names(conn) -> List[str]:
@@ -30,4 +30,4 @@ def read_sqlite_table(path: str, table_name: str) -> dict:
     with sqlite3.connect(path) as con:
         column_names = _table_column_names(con, table_name)
         rows = _select_all_rows(con, table_name)
-    return tim.combine_names_rows(column_names, rows)
+    return tim.utils.combine_names_rows(column_names, rows)

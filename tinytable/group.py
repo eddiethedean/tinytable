@@ -1,7 +1,7 @@
 from collections import namedtuple
 from typing import Collection, List, Union
 
-import tinytim.functions as tim
+import tinytim as tim
 
 import tinytable as tt
 
@@ -25,10 +25,10 @@ class Group:
         return self.groups[i]
         
     def sum(self):
-        labels, rows = tim.sum_groups(self.groups, self.by)
+        labels, rows = tim.group.sum_groups(self.groups, self.by)
         return tt.Table(rows, labels)
 
     def count(self):
-        labels, rows = tim.count_groups(self.groups, self.by)
+        labels, rows = tim.group.count_groups(self.groups, self.by)
         return tt.Table(rows, labels)
 
