@@ -4,7 +4,8 @@ import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 from openpyxl.chartsheet.chartsheet import Chartsheet
-import tinytim as tim
+
+from tinytable.functional.utils import combine_names_rows
 
 
 Sheet = Union[Worksheet, ReadOnlyWorksheet, Chartsheet]
@@ -48,4 +49,4 @@ def read_excel_file(path: str, sheet_name: Optional[str] = None) -> dict:
             else:
                 rows.append(row)
 
-    return tim.utils.combine_names_rows(column_names, rows)
+    return combine_names_rows(column_names, rows)

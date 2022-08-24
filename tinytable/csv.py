@@ -1,9 +1,10 @@
 import csv
 from typing import Generator, MutableMapping, Union
 
-import tinytim as tim
 from tinytable.functional.features import column_names
 from tinytable.functional.rows import itertuples
+from tinytable.functional.utils import combine_names_rows
+
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:
@@ -49,12 +50,12 @@ def chunk_csv_file(
             else:
                 rows.append([convert_str(v) for v in row])
             if i == chunk_end:
-                yield tim.utils.combine_names_rows(column_names, rows)
+                yield combine_names_rows(column_names, rows)
                 rows = []
                 chunk_end += chunksize
         else:
             if len(rows) > 0:
-                yield tim.utils.combine_names_rows(column_names, rows)
+                yield combine_names_rows(column_names, rows)
 
 
 def read_csv_file(
@@ -77,7 +78,7 @@ def read_csv_file(
                 first = False
             else:
                 rows.append([convert_str(v) for v in row])
-        return tim.utils.combine_names_rows(column_names, rows)
+        return combine_names_rows(column_names, rows)
 
 
 def data_to_csv_file(
