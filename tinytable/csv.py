@@ -1,9 +1,9 @@
 import csv
-from typing import Generator, MutableMapping, Union
+from typing import Generator, List, MutableMapping, Union
 
 from tinytable.functional.features import column_names
 from tinytable.functional.rows import itertuples
-from tinytable.functional.utils import combine_names_rows
+from tinytable.functional.utils import combine_names_rows, row_dicts_to_data
 
 
 
@@ -63,22 +63,8 @@ def read_csv_file(
     newline='',
     encoding='utf-8-sig'
 ) -> dict:
-    """
-    Reads a table object from given CSV file path.
-    """
-    column_names = []
-    rows = []
-    first = True
     with open(path, 'r', newline=newline, encoding=encoding) as f:
-        dialect = csv.Sniffer().sniff(f.read(1024))
-        f.seek(0)
-        for row in csv.reader(f, dialect):
-            if first:
-                column_names = row
-                first = False
-            else:
-                rows.append([convert_str(v) for v in row])
-        return combine_names_rows(column_names, rows)
+        return row_dicts_to_data([row for row in csv.DictReader(f)])
 
 
 def data_to_csv_file(
