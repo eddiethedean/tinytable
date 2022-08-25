@@ -1,4 +1,4 @@
-from typing import Mapping, Optional, Union
+from typing import Collection, MutableMapping, Optional, Union
 from os.path import exists
 
 from openpyxl import load_workbook, Workbook
@@ -55,29 +55,45 @@ def read_excel_file(path: str, sheet_name: Optional[str] = None) -> dict:
     return combine_names_rows(column_names, rows)
 
 
-def data_to_excel_file(data: Mapping, path: str, sheet_name: Optional[str] = None) -> None:
+def next_sheet_name(sheet_names: Collection, sheet_number: int) -> str:
+    if f'Sheet{sheet_number}' in sheet_names:
+        return next_sheet_name(sheet_names, sheet_number + 1)
+    else:
+        return f'Sheet{sheet_number}'
+        
+
+def data_to_excel_file(
+    data: MutableMapping,
+    path: str,
+    sheet_name: Optional[str] = None,
+    replace_workbook: bool = False,
+    replace_worksheet: bool = True
+) -> None:
     """
-    Write data to excel file.
+    Write data to Excel file.
+    
     Path needs to end with file name then .xlsx
+    
     Creates new xlsx file if path file does not exist.
     Adds new worksheet named sheet_name if the file exists.
     Overides worksheet sheet_name if it already exists.
+    If sheet_name is None, will pick next available Sheet{i} name.
     """
-    if exists(path):
+    if exists(path) and not replace_workbook:
         wb = load_workbook(path)
         if sheet_name is None:
-            sheet_name = wb.active.title
+            sheet_name = next_sheet_name(wb.sheetnames, 1)
     else:
         wb = Workbook()
         if sheet_name is None:
             sheet_name = 'Sheet1'
-        
-    if sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
-        ws.delete_rows(1, ws.max_row+1)
-    else:
-        ws = wb.create_sheet(sheet_name)
     
+    if sheet_name in wb.sheetnames:
+        if not replace_worksheet:
+            raise ValueError(f'Worksheet {sheet_name} already exists.')
+        del wb[sheet_name]
+
+    ws = wb.create_sheet(sheet_name)
     # add column names
     ws.append(list(data.keys()))
     # add rows data

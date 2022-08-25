@@ -1,5 +1,6 @@
 from __future__ import annotations
 import copy
+from dataclasses import replace
 from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 
@@ -9,7 +10,7 @@ import tinytable.column as column
 from tinytable.group import Group
 import tinytable.row as row
 from tinytable.csv import data_to_csv_file, read_csv_file
-from tinytable.excel import read_excel_file
+from tinytable.excel import data_to_excel_file, read_excel_file
 from tinytable.sqlite import read_sqlite_table
 from tinytable.filter import Filter
 from tinytable.functional.edit import edit_column, drop_column_inplace, drop_column, drop_row_inplace
@@ -258,9 +259,15 @@ class Table:
         """Save Table as csv at path."""
         data_to_csv_file(self.data, path)
 
-    def to_excel(self, path: str) -> None:
+    def to_excel(
+        self,
+        path: str,
+        sheet_name: Optional[str] = None,
+        replace_workbook: bool = False,
+        replace_worksheet: bool = True
+    ) -> None:
         """Save Table in Excel Workbook."""
-        ...
+        data_to_excel_file(self.data, path, sheet_name, replace_workbook, replace_worksheet)
 
     def to_sqlite(self, path: str, table_name: str) -> None:
         """Save Table in sqlite database."""
