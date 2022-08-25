@@ -83,6 +83,14 @@ def data_to_sqlite_table(
         data_types[name] = 'TEXT'
 
     # Create Sqlite Table with column types
-
+    next = ',' + chr(10)
+    create_table_sql = f"""
+    CREATE TABLE IF NOT EXISTS {table_name} (
+        {next.join([col_name + ' ' + data_type for col_name, data_type in data_types.items()])}
+    );
+    """
+    c = sqlite3.connect(path)
+    c.execute(create_table_sql)
+    
     # Insert data rows
 
