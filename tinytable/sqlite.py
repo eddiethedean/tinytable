@@ -1,8 +1,11 @@
 import sqlite3
 from typing import List, Mapping, MutableMapping, Optional
 
+from sqlite_utils import Database
+
 from tinytable.functional.utils import combine_names_rows
 from tinytable.functional.copy import copy_table
+from tinytable.functional.rows import iterrows
 
 
 def _table_names(conn) -> List[str]:
@@ -72,10 +75,15 @@ def data_to_sqlite_table(
     Error if table_name already exists.
     Guesses sqlite data types for columns if not provided.
     """
+    
+    db = Database(path)
+
+    db[table_name].insert_all(list(iterrows(data)))
+
     data = copy_table(data)
     if data_types is None:
         data_types = sqlite_column_types(data)
-
+    """ 
     # Convert any OBJECT data types to str
     for name, type in data_types.items():
         if type == 'OBJECT':
@@ -84,13 +92,13 @@ def data_to_sqlite_table(
 
     # Create Sqlite Table with column types
     next = ',' + chr(10)
-    create_table_sql = f"""
+    create_table_sql = 
     CREATE TABLE IF NOT EXISTS {table_name} (
         {next.join([col_name + ' ' + data_type for col_name, data_type in data_types.items()])}
     );
-    """
+
     c = sqlite3.connect(path)
-    c.execute(create_table_sql)
+    c.execute(create_table_sql) """
     
     # Insert data rows
 
