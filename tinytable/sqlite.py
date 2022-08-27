@@ -44,5 +44,5 @@ def data_to_sqlite_table(
     if isinstance(table, Table):
         if replace_table and table.exists():
             table.drop()
-        table.insert_all(records, pk=primary_key)
+        table.insert_all(records, pk=primary_key)  # type: ignore
 
