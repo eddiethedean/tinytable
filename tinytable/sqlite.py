@@ -1,80 +1,48 @@
-import sqlite3
-from typing import List, Mapping, MutableMapping, Optional
+from typing import List, MutableMapping, Optional
 
 from sqlite_utils import Database
+from sqlite_utils.db import Table
 
-from tinytable.functional.utils import combine_names_rows
-from tinytable.functional.copy import copy_table
+from tinytable.functional.utils import row_dicts_to_data
 from tinytable.functional.rows import iterrows
 
 
-def _table_names(conn) -> List[str]:
-    cursor = conn.cursor()
-    cursor.execute('SELECT name from sqlite_master where type= "table"')
-    return [x[0] for x in cursor.fetchall()]
-
-
 def get_table_names(path: str) -> List[str]:
-    with sqlite3.connect(path) as con:
-        return _table_names(con)
-
-
-def _table_column_names(conn, table_name):
-    cursor = conn.execute(f'select * from {table_name}')
-    return list(map(lambda x: x[0], cursor.description))
-
-
-def _select_all_rows(conn, table_name):
-    cur = conn.cursor()
-    cur.execute(f"SELECT * FROM {table_name}")
-    return cur.fetchall()
+    return Database(path).table_names()
 
 
 def read_sqlite_table(path: str, table_name: str) -> dict:
-    with sqlite3.connect(path) as con:
-        column_names = _table_column_names(con, table_name)
-        rows = _select_all_rows(con, table_name)
-    return combine_names_rows(column_names, rows)
-
-
-def sqlite_type(column: list) -> str:
-    """
-    Check what sqlite type column of values can be converted to.
-    
-    Returns Sqlite type name.
-    
-    """
-    if all(isinstance(x, int) for x in column):
-        return 'INTEGER'
-    if all(isinstance(x, (int, float)) for x in column):
-        return 'REAL'
-    if all(isinstance(x, bytes) for x in column):
-        return 'BLOB'
-    if all(isinstance(x, str) for x in column):
-        return 'TEXT'
-    else:
-        return 'OBJECT'
-    
-
-def sqlite_column_types(data: Mapping) -> dict:
-    """
-    Check what sqlite types each column can be converted to.
-    
-    Return dict[column_name, sqlite_type_name]
-    """
-    return {name: sqlite_type(values) for name, values in data.items()}
+    db = Database(path)
+    return row_dicts_to_data(list(db[table_name].rows))
 
 
 def data_to_sqlite_table(
     data: MutableMapping,
     path: str,
-    table_name: str
+    table_name: str,
+    primary_key: Optional[str] = None,
+    replace_table: bool = False,
+    append_records = False
 ) -> None:
     """
     Create Sqlite Table and insert data.
-    TODO: Error if table_name already exists.
+    Error if table_name already exists.
+    
+    Set primary_key to a column name to create primary key.
+    
+    Set replace_table = True to drop table then
+    create new table based on data.
+    
+    Set append_records = True to insert records
+    into existing table.
     """
     db = Database(path)
     records = [d for _, d in iterrows(data)]
-    db[table_name].insert_all(records)
+    table = db.table(table_name)
+    if table.exists() and not replace_table and not append_records:
+        raise ValueError(f'Table {table_name} already exists.')
+    if isinstance(table, Table):
+        if replace_table and table.exists():
+            table.drop()
+        table.insert_all(records, pk=primary_key)
 
