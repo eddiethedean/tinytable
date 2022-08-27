@@ -68,37 +68,13 @@ def sqlite_column_types(data: Mapping) -> dict:
 def data_to_sqlite_table(
     data: MutableMapping,
     path: str,
-    table_name: str,
-    data_types: Optional[dict] = None) -> None:
+    table_name: str
+) -> None:
     """
     Create Sqlite Table and insert data.
-    Error if table_name already exists.
-    Guesses sqlite data types for columns if not provided.
+    TODO: Error if table_name already exists.
     """
-    
     db = Database(path)
-
-    db[table_name].insert_all(list(iterrows(data)))
-
-    data = copy_table(data)
-    if data_types is None:
-        data_types = sqlite_column_types(data)
-    """ 
-    # Convert any OBJECT data types to str
-    for name, type in data_types.items():
-        if type == 'OBJECT':
-            data[name] = [str(x) for x in data[name]]
-        data_types[name] = 'TEXT'
-
-    # Create Sqlite Table with column types
-    next = ',' + chr(10)
-    create_table_sql = 
-    CREATE TABLE IF NOT EXISTS {table_name} (
-        {next.join([col_name + ' ' + data_type for col_name, data_type in data_types.items()])}
-    );
-
-    c = sqlite3.connect(path)
-    c.execute(create_table_sql) """
-    
-    # Insert data rows
+    records = [d for _, d in iterrows(data)]
+    db[table_name].insert_all(records)
 
