@@ -11,7 +11,7 @@ from tinytable.group import Group
 import tinytable.row as row
 from tinytable.csv import data_to_csv_file, read_csv_file
 from tinytable.excel import data_to_excel_file, read_excel_file
-from tinytable.sqlite import read_sqlite_table
+from tinytable.sqlite import data_to_sqlite_table, read_sqlite_table
 from tinytable.filter import Filter
 from tinytable.functional.edit import edit_column, drop_column_inplace, drop_column, drop_row_inplace
 from tinytable.functional.edit import edit_row_items_inplace, edit_row_values_inplace, drop_row
@@ -269,9 +269,21 @@ class Table:
         """Save Table in Excel Workbook."""
         data_to_excel_file(self.data, path, sheet_name, replace_workbook, replace_worksheet)
 
-    def to_sqlite(self, path: str, table_name: str) -> None:
+    def to_sqlite(
+        self,
+        path: str,
+        table_name: str,
+        primary_key: Optional[str] = None,
+        replace_table: bool = False,
+        append_records = False
+    ) -> None:
         """Save Table in sqlite database."""
-        ...
+        data_to_sqlite_table(self.data,
+                             path,
+                             table_name,
+                             primary_key,
+                             replace_table,
+                             append_records)
 
     def label_head(self, n: int = 5) -> Union[None, List]:
         return None if self.labels is None else self.labels[:5]
