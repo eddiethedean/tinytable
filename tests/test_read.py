@@ -28,3 +28,15 @@ class TestReadExcel(unittest.TestCase):
                     'age': [4, 5, 8, 3, 24, 56, 12, 68, 21, 90],
                     'gender': ['f', 'm', 'f', 'm', 'f', 'm', 'f', 'm', 'f', 'm']}
         self.assertDictEqual(data, expected)
+
+
+class TestReadSql(unittest.TestCase):
+
+    def test_sql(self):
+        data = read_sqlite_table('tests/data/data.db', 'people')
+        expected = {'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    'name': ['Olivia', 'Noah', 'Emma', 'Liam', 'Amelia', 'Oliver',
+                             'Ava', 'Elijah', 'Sophia', 'Mateo'],
+                    'age': [4, 5, 8, 3, 24, 56, 12, 68, 21, 90],
+                    'gender': ['f', 'm', 'f', 'm', 'f', 'm', 'f', 'm', 'f', 'm']}
+        self.assertDictEqual(data, expected)
