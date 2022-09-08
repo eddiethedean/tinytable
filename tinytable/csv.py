@@ -1,4 +1,6 @@
 import csv
+from urllib import request
+from os.path import exists
 from typing import Dict, Generator, List, MutableMapping, Union, MutableSequence
 
 from tinytable.functional.features import column_names
@@ -122,7 +124,7 @@ def read_csv_file(
     encoding: str = 'utf-8-sig',
     convert_numbers: bool = True,
     convert_columns: bool = False
-) -> Dict[str, MutableSequence]:
+) -> Dict[str, List]:
     with open(path, 'r', newline=newline, encoding=encoding) as f:
         d = row_dicts_to_data([row for row in csv.DictReader(f)])
     if convert_numbers: convert_values_inplace(d)
@@ -143,3 +145,37 @@ def data_to_csv_file(
         writer = csv.writer(f)
         writer.writerow(names)
         writer.writerows(rows)
+
+
+def read_csv_url(
+    url: str,
+    encoding='utf-8-sig',
+    convert_numbers: bool = True,
+    convert_columns: bool = False
+) -> Dict[str, List]:
+    response = request.urlopen(url)
+    lines = [l.decode(encoding) for l in response.readlines()]
+    d = row_dicts_to_data([row for row in csv.DictReader(lines)])
+    if convert_numbers: convert_values_inplace(d)
+    if convert_columns: convert_columns_inplace(d)
+    return d
+
+
+def read_csv(
+    path: str,
+    newline: str = '',
+    encoding: str = 'utf-8-sig',
+    convert_numbers: bool = True,
+    convert_columns: bool = False
+) -> Dict[str, List]:
+    # check if path is valid file path
+    if exists(path):
+        return read_csv_file(path,
+                             newline,
+                             encoding,
+                             convert_numbers,
+                             convert_columns)
+    return read_csv_url(path,
+                        encoding,
+                        convert_numbers,
+                        convert_columns)
