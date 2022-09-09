@@ -127,8 +127,8 @@ def read_csv_file(
 ) -> Dict[str, List]:
     with open(path, 'r', newline=newline, encoding=encoding) as f:
         d = row_dicts_to_data([row for row in csv.DictReader(f)])
-    if convert_numbers: convert_values_inplace(d)
-    if convert_columns: convert_columns_inplace(d)
+    if convert_numbers: convert_values_inplace(d)  # type: ignore
+    if convert_columns: convert_columns_inplace(d)  # type: ignore
     return d
 
 
@@ -156,8 +156,8 @@ def read_csv_url(
     response = request.urlopen(url)
     lines = [l.decode(encoding) for l in response.readlines()]
     d = row_dicts_to_data([row for row in csv.DictReader(lines)])
-    if convert_numbers: convert_values_inplace(d)
-    if convert_columns: convert_columns_inplace(d)
+    if convert_numbers: convert_values_inplace(d)  # type: ignore
+    if convert_columns: convert_columns_inplace(d)  # type: ignore
     return d
 
 
