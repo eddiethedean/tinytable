@@ -1,7 +1,7 @@
 import csv
 from urllib import request
 from os.path import exists
-from typing import Dict, Generator, List, MutableMapping, Union, MutableSequence
+from typing import Dict, Generator, List, MutableMapping, Optional, Sequence, Union, MutableSequence
 
 from tinytable.functional.features import column_names
 from tinytable.functional.rows import itertuples
@@ -120,13 +120,15 @@ def convert_columns_inplace(d: MutableMapping[str, MutableSequence]) -> None:
 
 def read_csv_file(
     path: str,
+    names: Optional[Sequence[str]] = None,
     newline: str = '',
     encoding: str = 'utf-8-sig',
     convert_numbers: bool = True,
     convert_columns: bool = False
 ) -> Dict[str, List]:
     with open(path, 'r', newline=newline, encoding=encoding) as f:
-        d = row_dicts_to_data([row for row in csv.DictReader(f)])
+        reader = csv.DictReader(f, fieldnames=names) if names else csv.DictReader(f)
+        d = row_dicts_to_data([row for row in reader])
     if convert_numbers: convert_values_inplace(d)  # type: ignore
     if convert_columns: convert_columns_inplace(d)  # type: ignore
     return d
@@ -149,13 +151,15 @@ def data_to_csv_file(
 
 def read_csv_url(
     url: str,
+    names: Optional[Sequence[str]] = None,
     encoding='utf-8-sig',
     convert_numbers: bool = True,
     convert_columns: bool = False
 ) -> Dict[str, List]:
     response = request.urlopen(url)
     lines = [l.decode(encoding) for l in response.readlines()]
-    d = row_dicts_to_data([row for row in csv.DictReader(lines)])
+    reader = csv.DictReader(lines, fieldnames=names) if names else csv.DictReader(lines)
+    d = row_dicts_to_data([row for row in reader])
     if convert_numbers: convert_values_inplace(d)  # type: ignore
     if convert_columns: convert_columns_inplace(d)  # type: ignore
     return d
@@ -163,6 +167,7 @@ def read_csv_url(
 
 def read_csv(
     path: str,
+    names: Optional[Sequence[str]] = None,
     newline: str = '',
     encoding: str = 'utf-8-sig',
     convert_numbers: bool = True,
@@ -171,11 +176,13 @@ def read_csv(
     # check if path is valid file path
     if exists(path):
         return read_csv_file(path,
+                             names,
                              newline,
                              encoding,
                              convert_numbers,
                              convert_columns)
     return read_csv_url(path,
+                        names,
                         encoding,
                         convert_numbers,
                         convert_columns)

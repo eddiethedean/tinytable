@@ -323,8 +323,8 @@ class Table:
         return count_data(self.data)
 
 
-def read_csv(path: str):
-    return Table(read_csv_url_path(path))
+def read_csv(path: str, names: Optional[Sequence[str]] = None):
+    return Table(read_csv_url_path(path, names=names))
 
 
 def read_excel(path: str, sheet_name: Optional[str] = None) -> Table:
