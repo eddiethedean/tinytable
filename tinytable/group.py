@@ -11,7 +11,7 @@ class Group:
     """
     def __init__(self, groups: List[tuple], by: Union[str, Collection]):
         self.groups = groups
-        self.by = by
+        self.by = [by] if isinstance(by, str) else by
 
     def __iter__(self):
         return iter(self.groups)
