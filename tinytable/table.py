@@ -8,7 +8,7 @@ from tabulate import tabulate
 import tinytable.column as column
 from tinytable.group import Group
 import tinytable.row as row
-from tinytable.csv import data_to_csv_file, read_csv_file, read_csv
+from tinytable.csv import data_to_csv_file, read_csv as read_csv_url_path
 from tinytable.excel import data_to_excel_file, read_excel_file
 from tinytable.sqlite import data_to_sqlite_table, read_sqlite_table
 from tinytable.filter import Filter
@@ -324,7 +324,7 @@ class Table:
 
 
 def read_csv(path: str):
-    return Table(read_csv(path))
+    return Table(read_csv_url_path(path))
 
 
 def read_excel(path: str, sheet_name: Optional[str] = None) -> Table:
