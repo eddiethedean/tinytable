@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
+from typing import Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
@@ -23,7 +23,8 @@ from tinytable.functional.filter import indexes_from_filter, only_columns, filte
 from tinytable.functional.filter import filter_by_indexes, sample_indexes
 from tinytable.functional.rows import row_dict, itertuples
 from tinytable.functional.copy import deepcopy_table, copy_table
-from tinytable.functional.group import groupby, sum_data, count_data
+from tinytable.functional.group import groupby, sum_data, count_data, nunique_data, mean_data, min_data
+from tinytable.functional.group import max_data, stdev_data, mode_data, pstdev_data
 
 
 class Table:
@@ -321,6 +322,24 @@ class Table:
 
     def count(self) -> dict:
         return count_data(self.data)
+
+    def mean(self) -> dict:
+        return mean_data(self.data)
+
+    def min(self) -> dict:
+        return min_data(self.data)
+
+    def max(self) -> dict:
+        return max_data(self.data)
+
+    def std(self) -> dict:
+        return stdev_data(self.data)
+
+    def mode(self) -> dict:
+        return mode_data(self.data)
+
+    def pstd(self) -> dict:
+        return pstdev_data(self.data)
 
 
 def read_csv(path: str, names: Optional[Sequence[str]] = None):
