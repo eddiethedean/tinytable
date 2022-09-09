@@ -23,10 +23,10 @@ class Group:
         return self.groups[i]
         
     def sum(self):
-        labels, rows = sum_groups(self.groups, self.by)
+        labels, rows = sum_groups(self.groups)
         return tt.Table(rows, labels)
 
     def count(self):
-        labels, rows = count_groups(self.groups, self.by)
+        labels, rows = count_groups(self.groups)
         return tt.Table(rows, labels)
 
