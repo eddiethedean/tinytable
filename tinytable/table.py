@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Union, Iterator
+from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
@@ -313,7 +313,7 @@ class Table:
         labels = None if self.labels is None else filter_list_by_indexes(self.labels, indexes)
         return Table(filter_by_indexes(self.data, indexes), labels=labels)
 
-    def groupby(self, by: Union[str, Collection]) -> Group:
+    def groupby(self, by: Union[str, Sequence]) -> Group:
         return Group([(value, Table(data)) for value, data in groupby(self.data, by)], by)
 
     def sum(self) -> dict:
