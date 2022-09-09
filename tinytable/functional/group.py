@@ -1,1 +1,1 @@
-from tinytim.group import groupby, sum_data, count_data, sum_groups, count_groups
+from tinytim.group import groupby, sum_data, count_data, sum_groups, count_groups, mean_groups

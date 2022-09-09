@@ -30,3 +30,7 @@ class Group:
         labels, rows = count_groups(self.groups)
         return tt.Table(rows, labels)
 
+    def mean(self):
+        labels, rows = mean_groups(self.groups)
+        return tt.Table(rows, labels)
+
