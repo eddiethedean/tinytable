@@ -1,4 +1,4 @@
-from typing import Collection, MutableMapping, Optional, Union
+from typing import Collection, List, MutableMapping, Optional, Union
 from os.path import exists
 
 from openpyxl import load_workbook, Workbook
@@ -38,7 +38,7 @@ def read_excel_file(path: str, sheet_name: Optional[str] = None) -> dict:
     """
     Reads a table object from given excel file path.
     """
-    column_names = []
+    column_names: List[str] = []
     rows = []
     first = True
     with WorkBook(path) as wb:
@@ -47,7 +47,7 @@ def read_excel_file(path: str, sheet_name: Optional[str] = None) -> dict:
             raise TypeError('Chartsheet has no values to read into table.')
         for row in ws.values:
             if first:
-                column_names = row
+                column_names = [str(name) for name in row]
                 first = False
             else:
                 rows.append(row)
