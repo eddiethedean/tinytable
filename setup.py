@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tinytable",
-    version="0.9.0",
+    version="0.9.1",
     description="Pure Python lite version of Pandas DataFrame.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -18,7 +18,7 @@ setup(
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
     packages=find_packages(),
     include_package_data=True,
