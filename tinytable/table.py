@@ -12,6 +12,7 @@ from tinytable.csv import data_to_csv_file, read_csv as read_csv_url_path
 from tinytable.excel import data_to_excel_file, read_excel_file
 from tinytable.sqlite import data_to_sqlite_table, read_sqlite_table
 from tinytable.filter import Filter
+from tinytable.iloc import Iloc
 from tinytable.functional.edit import edit_column, drop_column_inplace, drop_column, drop_row_inplace
 from tinytable.functional.edit import edit_row_items_inplace, edit_row_values_inplace, drop_row
 from tinytable.functional.edit import drop_label_inplace, edit_row_items, edit_value_inplace
@@ -153,6 +154,11 @@ class Table(MutableMapping):
     @property
     def values(self) -> tuple[tuple]:
         return values(self.data)
+
+    @property
+    def iloc(self) -> Iloc:
+        """Purely integer-location based indexing for selection by position."""
+        return Iloc(self)
 
     def filter(self, f: Filter) -> Table:
         indexes = indexes_from_filter(f)
