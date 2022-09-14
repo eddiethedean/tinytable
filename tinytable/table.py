@@ -32,11 +32,12 @@ class Table:
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data: MutableMapping = {}, labels=None) -> None:
+    def __init__(self, data: MutableMapping = {}, labels=None, columns=None) -> None:
         self.data = data
         self._store_data()
         self._validate()
         self.labels = labels if labels is None else list(labels)
+        if columns is not None: self.columns = columns
 
     def _store_data(self):
         for col in self.data:
