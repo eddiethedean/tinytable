@@ -27,17 +27,23 @@ from tinytable.functional.group import groupby, sum_data, count_data, nunique_da
 from tinytable.functional.group import max_data, stdev_data, mode_data, pstdev_data
 
 
-class Table:
+class Table(MutableMapping):
     """Data table organized into {column_name: list[values]}
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data: MutableMapping = {}, labels=None, columns=None) -> None:
+    def __init__(self, data: Union[MutableMapping, Sequence[Sequence]] = {}, labels=None, columns=None) -> None:
+        if columns is not None and not isinstance(data, Mapping):
+            data = {col: values for col, values in zip(columns, data)}
+        if columns is not None and isinstance(data, Mapping):
+            data = {col: values for col, values in zip(columns, data.values())}
+        if not isinstance(data, Mapping):
+            data = {str(i): values for i, values in zip(range(len(data)), data)}
+
         self.data = data
         self._store_data()
         self._validate()
         self.labels = labels if labels is None else list(labels)
-        if columns is not None: self.columns = columns
 
     def _store_data(self):
         for col in self.data:
