@@ -1,5 +1,6 @@
 """Purely integer-location based indexing for Table selection by position."""
 from tinytable.functional.utils import slice_to_range
+from tinytable.functional.features import table_value
 
 from typing import List, Sequence
 
@@ -33,7 +34,9 @@ class Iloc:
 
             # With scalar integers. tbl.iloc[0, 1]
             if is_int_tuple(key):
-                return self.parent[key]
+                data = self.parent.data
+                columns = self.parent.columns
+                return table_value(data, columns[key[1]], key[0])
             
             # With lists of integers. tbl.iloc[[0, 2], [1, 3]]
             if is_two_int_lists(key):
