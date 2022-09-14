@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tinytable",
-    version="0.10.1",
+    version="0.11.0",
     description="Pure Python lite version of Pandas DataFrame.",
     long_description=README,
     long_description_content_type="text/markdown",
