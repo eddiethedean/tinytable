@@ -41,14 +41,14 @@ class Iloc:
             # With lists of integers. tbl.iloc[[0, 2], [1, 3]]
             if is_two_int_lists(key):
                 cols = self.parent.columns
-                return self.parent[[cols[i] for i in key[1]]].filter_by_indexes[key[0]]
+                return self.parent[[cols[i] for i in key[1]]].filter_by_indexes(key[0])
 
             # With slice objects. tbl.iloc[1:3, 0:3]
             if is_two_int_slices(key):
                 index_range = slice_to_range(key[0])
                 column_range = slice_to_range(key[1])
                 cols = self.parent.columns
-                return self.parent[[cols[i] for i in column_range]].filter_by_indexes[index_range]
+                return self.parent[[cols[i] for i in column_range]].filter_by_indexes(index_range)
 
         raise TypeError('Cannot index by location index with a non-integer key')
 
