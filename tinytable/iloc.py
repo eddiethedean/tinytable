@@ -35,8 +35,8 @@ class Iloc:
             # With scalar integers. tbl.iloc[0, 1]
             if is_int_tuple(key):
                 data = self.parent.data
-                columns = self.parent.columns
-                return table_value(data, columns[key[1]], key[0])
+                column = self.parent.columns[key[1]]
+                return table_value(data, column, key[0])
             
             # With lists of integers. tbl.iloc[[0, 2], [1, 3]]
             if is_two_int_lists(key):
@@ -49,6 +49,46 @@ class Iloc:
                 column_range = slice_to_range(key[1])
                 cols = self.parent.columns
                 return self.parent[[cols[i] for i in column_range]].filter_by_indexes(index_range)
+
+        raise TypeError('Cannot index by location index with a non-integer key')
+
+    def __setitem__(self, key, value) -> None:
+        # With a scalar integer. tbl.iloc[0] = {'age': 22}
+        if isinstance(key, int):
+            self.parent[key] = value
+        
+        # With a slice object. tbl.iloc[:3] = [{'age': 22}, {'age': 21}, {'age': 20}]
+        if isinstance(key, slice):
+            if is_int_slice(key):
+                self.parent[key] = value
+            else:
+                raise TypeError('Cannot index by location index with a non-integer key')
+
+        # With a list of integers. tbl.iloc[[0, 1]] = [{'age': 22}, {'age': 21}]
+        #                          tbl.iloc[[0, 1]] = [[1, 22], [2, 21]]
+        if isinstance(key, list):
+            if is_int_list(key):
+                for i, v in zip(key, value):
+                    self.parent.edit_row(i, v)
+            else:
+                raise TypeError('Cannot index by location index with a non-integer key')
+
+        if isinstance(key, tuple):
+            if len(key) > 2:
+                raise IndexError('Too many indexers')
+
+            # With scalar integers. tbl.iloc[0, 1] = 22
+            if is_int_tuple(key):
+                column = self.parent.columns[key[1]]
+                self.parent[column][key[0]] = value
+
+            # With lists of integers. tbl.iloc[[0, 2], [1, 3]] = []
+            if is_two_int_lists(key):
+                raise NotImplemented('Setting value of Table subset is not implemented.')
+
+            # With slice objects. tbl.iloc[1:3, 0:3]
+            if is_two_int_slices(key):
+                raise NotImplemented('Setting value of Table subset is not implemented.')
 
         raise TypeError('Cannot index by location index with a non-integer key')
 
