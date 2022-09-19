@@ -56,11 +56,13 @@ class Iloc:
         # With a scalar integer. tbl.iloc[0] = {'age': 22}
         if isinstance(key, int):
             self.parent[key] = value
+            return
         
         # With a slice object. tbl.iloc[:3] = [{'age': 22}, {'age': 21}, {'age': 20}]
         if isinstance(key, slice):
             if is_int_slice(key):
                 self.parent[key] = value
+                return
             else:
                 raise TypeError('Cannot index by location index with a non-integer key')
 
@@ -70,6 +72,7 @@ class Iloc:
             if is_int_list(key):
                 for i, v in zip(key, value):
                     self.parent.edit_row(i, v)
+                return
             else:
                 raise TypeError('Cannot index by location index with a non-integer key')
 
@@ -81,6 +84,7 @@ class Iloc:
             if is_int_tuple(key):
                 column = self.parent.columns[key[1]]
                 self.parent[column][key[0]] = value
+                return
 
             # With lists of integers. tbl.iloc[[0, 2], [1, 3]] = []
             if is_two_int_lists(key):

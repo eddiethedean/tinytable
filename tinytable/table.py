@@ -5,27 +5,23 @@ from typing import Any, Callable, MutableSequence, Generator
 
 from tabulate import tabulate
 
-import tinytable.column as column
+from tinytable.column import Column
+from tinytable.row import Row
 from tinytable.group import Group
-import tinytable.row as row
-from tinytable.csv import data_to_csv_file, read_csv as read_csv_url_path
-from tinytable.excel import data_to_excel_file, read_excel_file
-from tinytable.sqlite import data_to_sqlite_table, read_sqlite_table
 from tinytable.filter import Filter
 from tinytable.iloc import Iloc
-from tinytable.functional.edit import edit_column, drop_column_inplace, drop_column, drop_row_inplace
-from tinytable.functional.edit import edit_row_items_inplace, edit_row_values_inplace, drop_row
-from tinytable.functional.edit import drop_label_inplace, edit_row_items, edit_value_inplace
-from tinytable.functional.edit import drop_label, edit_value, edit_row_values
-from tinytable.functional.features import row_count, shape, size, column_names, index, values
-from tinytable.functional.features import column_values, head, tail
-from tinytable.functional.utils import slice_to_range, all_bool, nunique
-from tinytable.functional.filter import indexes_from_filter, only_columns, filter_list_by_indexes
-from tinytable.functional.filter import filter_by_indexes, sample_indexes
-from tinytable.functional.rows import row_dict, itertuples
-from tinytable.functional.copy import deepcopy_table, copy_table
-from tinytable.functional.group import groupby, sum_data, count_data, nunique_data, mean_data, min_data
-from tinytable.functional.group import max_data, stdev_data, mode_data, pstdev_data
+import tinytable.column as column
+import tinytable.row as row
+import tinytable.csv as csv
+import tinytable.excel as excel
+import tinytable.sqlite as sqlite
+import tinytable.functional.edit as edit
+import tinytable.functional.features as features
+import tinytable.functional.utils as utils
+import tinytable.functional.filter as filter
+import tinytable.functional.rows as rows
+import tinytable.functional.copy as data_copy
+import tinytable.functional.group as group
 
 
 class Table(MutableMapping):
@@ -53,12 +49,12 @@ class Table(MutableMapping):
     def _store_column(self, column_name: str, values: Iterable, inplace=True) -> Union[None, Table]:
         values = list(values)
         if inplace:
-            edit_column(self.data, column_name, values)
+            edit.edit_column(self.data, column_name, values)
         else:
-            return Table(edit_column(self.data, column_name, values))
+            return Table(edit.edit_column(self.data, column_name, values))
         
     def __len__(self) -> int:
-        return row_count(self.data)
+        return features.row_count(self.data)
         
     def __repr__(self) -> str:
         index = True if self.labels is None else self.labels
@@ -67,7 +63,7 @@ class Table(MutableMapping):
     def __iter__(self) -> Iterator[str]:
         return iter(self.data)
     
-    def __getitem__(self, key: Union[str, int]) -> Union[column.Column, row.Row, Table]:
+    def __getitem__(self, key: Union[str, int]) -> Union[column.Column, Row, Table]:
         """
            Use str key for Column selection. Setting Column items changes parent Table.
            Use int key for Row selection. Setting Row items changes parent Table.
@@ -89,9 +85,9 @@ class Table(MutableMapping):
         # tbl[1:4] -> Table
         if isinstance(key, slice):
             validate_int_slice(key)
-            return self.filter_by_indexes(list(slice_to_range(key, len(self))))
+            return self.filter_by_indexes(list(utils.slice_to_range(key, len(self))))
         if isinstance(key, list):
-            if all_bool(key):
+            if utils.all_bool(key):
                 # tbl[[True, False, True, True]] -> Table
                 return self.filter(key)
             # tbl[['id', 'name']] -> Table
@@ -131,16 +127,16 @@ class Table(MutableMapping):
 
     @property
     def shape(self) -> tuple[int, int]:
-        return shape(self.data)
+        return features.shape(self.data)
 
     @property
     def size(self) -> int:
-        return size(self.data)
+        return features.size(self.data)
 
     @property
     def columns(self) -> tuple[str]:
         """Column names."""
-        return column_names(self.data)
+        return features.column_names(self.data)
 
     @columns.setter
     def columns(self, values: MutableSequence) -> None:
@@ -148,12 +144,12 @@ class Table(MutableMapping):
         self.replace_column_names(values)
 
     @property
-    def index(self) -> column.Column:
-        return column.Column(index(self.data), None, self, self.labels)
+    def index(self) -> Column:
+        return Column(features.index(self.data), None, self, self.labels)
 
     @property
     def values(self) -> tuple[tuple]:
-        return values(self.data)
+        return features.values(self.data)
 
     @property
     def iloc(self) -> Iloc:
@@ -161,12 +157,12 @@ class Table(MutableMapping):
         return Iloc(self)
 
     def filter(self, f: Filter) -> Table:
-        indexes = indexes_from_filter(f)
+        indexes = filter.indexes_from_filter(f)
         return self.filter_by_indexes(indexes)
 
     def only_columns(self, column_names: MutableSequence[str]) -> Table:
         """Return new Table with only column_names Columns."""
-        d = only_columns(self.data, column_names)
+        d = filter.only_columns(self.data, column_names)
         return Table(d, self.labels)
 
     def _convert_index(self, index: int) -> int:
@@ -195,52 +191,52 @@ class Table(MutableMapping):
     def _get_label(self, index: int) -> Union[None, List]:
         return None if self.labels is None else self.labels[index]
    
-    def row(self, index: int) -> row.Row:
+    def row(self, index: int) -> Row:
         label = self._get_label(index)
-        return row.Row(row_dict(self.data, index), index, self, label)
+        return Row(rows.row_dict(self.data, index), index, self, label)
 
-    def column(self, column_name: str) -> column.Column:
-        return column.Column(column_values(self.data, column_name), column_name, self, self.labels)
+    def column(self, column_name: str) -> Column:
+        return Column(features.column_values(self.data, column_name), column_name, self, self.labels)
 
     def drop_column(self, column_name: str, inplace=True) -> Union[None, Table]:
         if inplace:
-            drop_column_inplace(self.data, column_name)
+            edit.drop_column_inplace(self.data, column_name)
         else:
-            return Table(drop_column(self.data, column_name), self.labels)
+            return Table(edit.drop_column(self.data, column_name), self.labels)
 
     def drop_row(self, index: int, inplace=True) -> Union[None, Table]:
         if inplace:
-            drop_row_inplace(self.data, index)
-            drop_label_inplace(self.labels, index)
+            edit.drop_row_inplace(self.data, index)
+            edit.drop_label_inplace(self.labels, index)
         else:
-            return Table(drop_row(self.data, index), drop_label(self.labels, index))
+            return Table(edit.drop_row(self.data, index), edit.drop_label(self.labels, index))
 
     def keys(self) -> tuple[str]:
         return self.columns
     
-    def itercolumns(self) -> Generator[column.Column, None, None]:
+    def itercolumns(self) -> Generator[Column, None, None]:
         return column.itercolumns(self.data, self, self.labels)
             
-    def iterrows(self) -> Generator[tuple[int, row.Row], None, None]:
+    def iterrows(self) -> Generator[tuple[int, Row], None, None]:
         return row.iterrows(self.data, self, self.labels)
 
     def iteritems(self) -> Generator[tuple[str, column.Column], None, None]:
         return column.iteritems(self.data, self)
 
     def itertuples(self) -> Generator[tuple, None, None]:
-        return itertuples(self.data)
+        return rows.itertuples(self.data)
     
     def edit_row(self, index: int, values: Union[Mapping, MutableSequence], inplace=True) -> Union[None, Table]:
         if inplace:
             if isinstance(values, Mapping):
-                edit_row_items_inplace(self.data, index, values)
+                edit.edit_row_items_inplace(self.data, index, values)
             elif isinstance(values, MutableSequence):
-                edit_row_values_inplace(self.data, index, values)
+                edit.edit_row_values_inplace(self.data, index, values)
         else:
             if isinstance(values, Mapping):
-                data = edit_row_items(self.data, index, values)
+                data = edit.edit_row_items(self.data, index, values)
             elif isinstance(values, MutableSequence):
-                data = edit_row_values(self.data, index, values)
+                data = edit.edit_row_values(self.data, index, values)
             return Table(data, copy.copy(self.labels))
             
     def edit_column(self, column_name: str, values: MutableSequence, inplace=True) ->Union[None, Table]:
@@ -248,14 +244,14 @@ class Table(MutableMapping):
 
     def edit_value(self, column_name: str, index: int, value: Any, inplace=True) -> Union[None, Table]:
         if inplace:
-            edit_value_inplace(self.data, column_name, index, value)
+            edit.edit_value_inplace(self.data, column_name, index, value)
         else:
-            return Table(edit_value(self.data, column_name, index, value), copy.copy(self.labels))
+            return Table(edit.edit_value(self.data, column_name, index, value), copy.copy(self.labels))
 
     def copy(self, deep=False) -> Table:
         if deep:
-             return Table(deepcopy_table(self.data), copy.deepcopy(self.labels))
-        return Table(copy_table(self.data), copy.copy(self.labels))
+             return Table(data_copy.deepcopy_table(self.data), copy.deepcopy(self.labels))
+        return Table(data_copy.copy_table(self.data), copy.copy(self.labels))
 
     def cast_column_as(self, column_name: str, data_type: Callable) -> None:
         self.data[column_name] = [data_type(value) for value in self.data[column_name]]
@@ -270,7 +266,7 @@ class Table(MutableMapping):
 
     def to_csv(self, path: str) -> None:
         """Save Table as csv at path."""
-        data_to_csv_file(self.data, path)
+        csv.data_to_csv_file(self.data, path)
 
     def to_excel(
         self,
@@ -280,7 +276,7 @@ class Table(MutableMapping):
         replace_worksheet: bool = True
     ) -> None:
         """Save Table in Excel Workbook."""
-        data_to_excel_file(self.data, path, sheet_name, replace_workbook, replace_worksheet)
+        excel.data_to_excel_file(self.data, path, sheet_name, replace_workbook, replace_worksheet)
 
     def to_sqlite(
         self,
@@ -291,7 +287,7 @@ class Table(MutableMapping):
         append_records = False
     ) -> None:
         """Save Table in sqlite database."""
-        data_to_sqlite_table(self.data,
+        sqlite.data_to_sqlite_table(self.data,
                              path,
                              table_name,
                              primary_key,
@@ -305,66 +301,66 @@ class Table(MutableMapping):
         return None if self.labels is None else self.labels[5:]
 
     def head(self, n: int = 5) -> Table:
-        return Table(head(self.data, n), self.label_head(n))
+        return Table(features.head(self.data, n), self.label_head(n))
 
     def tail(self, n: int = 5) -> Table:
-        return Table(tail(self.data, n), self.label_tail(n))
+        return Table(features.tail(self.data, n), self.label_tail(n))
 
     def nunique(self) -> dict[str, int]:
         """Count number of distinct values in each column.
            Return dict with number of distinct values.
         """
-        return nunique(self.data)
+        return utils.nunique(self.data)
 
     def filter_by_indexes(self, indexes: MutableSequence[int]) -> Table:
         """return only rows in indexes"""
-        labels = None if self.labels is None else filter_list_by_indexes(self.labels, indexes)
-        return Table(filter_by_indexes(self.data, indexes), labels=labels)
+        labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
+        return Table(filter.filter_by_indexes(self.data, indexes), labels=labels)
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
-        indexes = sample_indexes(self.data, n, random_state)
-        labels = None if self.labels is None else filter_list_by_indexes(self.labels, indexes)
-        return Table(filter_by_indexes(self.data, indexes), labels=labels)
+        indexes = filter.sample_indexes(self.data, n, random_state)
+        labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
+        return Table(filter.filter_by_indexes(self.data, indexes), labels=labels)
 
     def groupby(self, by: Union[str, Sequence]) -> Group:
-        return Group([(value, Table(data)) for value, data in groupby(self.data, by)], by)
+        return Group([(value, Table(data)) for value, data in group.groupby(self.data, by)], by)
 
     def sum(self) -> dict:
-        return sum_data(self.data)
+        return group.sum_data(self.data)
 
     def count(self) -> dict:
-        return count_data(self.data)
+        return group.count_data(self.data)
 
     def mean(self) -> dict:
-        return mean_data(self.data)
+        return group.mean_data(self.data)
 
     def min(self) -> dict:
-        return min_data(self.data)
+        return group.min_data(self.data)
 
     def max(self) -> dict:
-        return max_data(self.data)
+        return group.max_data(self.data)
 
     def std(self) -> dict:
-        return stdev_data(self.data)
+        return group.stdev_data(self.data)
 
     def mode(self) -> dict:
-        return mode_data(self.data)
+        return group.mode_data(self.data)
 
     def pstd(self) -> dict:
-        return pstdev_data(self.data)
+        return group.pstdev_data(self.data)
 
 
 def read_csv(path: str, names: Optional[Sequence[str]] = None):
-    return Table(read_csv_url_path(path, names=names))
+    return Table(csv.read_csv(path, names=names))
 
 
 def read_excel(path: str, sheet_name: Optional[str] = None) -> Table:
-    return Table(read_excel_file(path, sheet_name))
+    return Table(excel.read_excel_file(path, sheet_name))
 
 
 def read_sqlite(path: str, table_name: str) -> Table:
-    return Table(read_sqlite_table(path, table_name))
+    return Table(sqlite.read_sqlite_table(path, table_name))
 
 
 def validate_int_slice(s: slice) -> None:
