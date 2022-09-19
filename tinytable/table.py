@@ -49,7 +49,7 @@ class Table(MutableMapping):
     def _store_column(self, column_name: str, values: Iterable, inplace=True) -> Union[None, Table]:
         values = list(values)
         if inplace:
-            edit.edit_column(self.data, column_name, values)
+            self.data = edit.edit_column(self.data, column_name, values)
         else:
             return Table(edit.edit_column(self.data, column_name, values))
         
@@ -261,7 +261,7 @@ class Table(MutableMapping):
             raise ValueError('new_keys must be same len as dict keys.')
         for new_key, old_key in zip(new_keys, self.data.keys()):
             if new_key != old_key:
-                self.data[new_key] = self.data[old_key]
+                self.data[new_key] = list(self.data[old_key])
                 del self.data[old_key]
 
     def to_csv(self, path: str) -> None:
