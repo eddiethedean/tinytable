@@ -2,6 +2,7 @@ from __future__ import annotations
 import copy
 from typing import Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
+from enum import Enum
 
 from tabulate import tabulate
 
@@ -22,6 +23,14 @@ import tinytable.functional.filter as filter
 import tinytable.functional.rows as rows
 import tinytable.functional.copy as data_copy
 import tinytable.functional.group as group
+import tinytable.functional.join as join
+
+
+class JoinStrategy(str, Enum):
+    left = 'left'
+    right = 'right'
+    inner = 'inner'
+    full = 'full'
 
 
 class Table(MutableMapping):
@@ -325,6 +334,39 @@ class Table(MutableMapping):
 
     def groupby(self, by: Union[str, Sequence]) -> Group:
         return Group([(value, Table(data)) for value, data in group.groupby(self.data, by)], by)
+
+    def inner_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+        data = join.inner_join(self.data, other, left_on, right_on)
+        return Table(data)
+
+    def left_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+        data = join.left_join(self.data, other, left_on, right_on)
+        return Table(data)
+
+    def right_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+        data = join.right_join(self.data, other, left_on, right_on)
+        return Table(data)
+
+    def full_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+        data = join.full_join(self.data, other, left_on, right_on)
+        return Table(data)
+
+    def join(
+        self,
+        other: Mapping[str, Sequence],
+        left_on,
+        right_on=None,
+        how: JoinStrategy = JoinStrategy.left
+    ) -> Table:
+        if how == JoinStrategy.left:
+            return self.left_join(other, left_on, right_on)
+        if how == JoinStrategy.right:
+            return self.right_join(other, left_on, right_on)
+        if how == JoinStrategy.inner:
+            return self.inner_join(other, left_on, right_on)
+        if how == JoinStrategy.full:
+            return self.full_join(other, left_on, right_on)
+        raise ValueError('how must be "left", "right", "inner", or "outer"')
 
     def sum(self) -> dict:
         return group.sum_data(self.data)

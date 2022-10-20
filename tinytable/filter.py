@@ -44,6 +44,32 @@ class Filter(Sequence):
     def __reversed__(self) -> Filter:
         return Filter(reversed(self.column), self.func)
 
+    def __and__(self, other) -> Filter:
+        """
+        Use to chain filters.
+        [False, True, True] & [True, False, True] -> [False, False True]
+        
+        Example
+        -------
+        Table[Column1 > 1] & Table[Column2 < 10]
+        """
+        def func(value: bool) -> bool:
+            return value == other
+        return Filter(self.column, func)
+        
+    def __or__(self, other) -> Filter:
+        """
+        Use to chain filters.
+        [False, True, True] | [True, False, True] -> [True, True True]
+        
+        Example
+        -------
+        Table[Column1 > 1] | Table[Column2 < 10]
+        """
+        def func(value: bool) -> bool:
+            return value or other
+        return Filter(self.column, func)
+
     def index(self, value) -> int:
         return list(iter(self)).index(value)
 
