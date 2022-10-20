@@ -44,34 +44,60 @@ class Filter(Sequence):
     def __reversed__(self) -> Filter:
         return Filter(reversed(self.column), self.func)
 
-    def __and__(self, other) -> Filter:
+    def __and__(self, other) -> ChainFilter:
         """
         Use to chain filters.
         [False, True, True] & [True, False, True] -> [False, False True]
         
         Example
         -------
-        Table[Column1 > 1] & Table[Column2 < 10]
+        >>> from tinytable import Table
+        >>> tbl = Table({'x': [0, 1, 2], 'y': [11, 11, 0])
+        >>> f = tbl['x'] > 1 & tbl['y'] < 10
+        >>> tbl[f].data
+        {'x': [2], 'y': [0]}
         """
-        def func(value: bool) -> bool:
-            return value == other
-        return Filter(self.column, func)
+        return ChainFilter(list(x & y for x, y in zip(self, other)))
         
-    def __or__(self, other) -> Filter:
+    def __or__(self, other: Filter) -> ChainFilter:
         """
         Use to chain filters.
         [False, True, True] | [True, False, True] -> [True, True True]
         
         Example
         -------
-        Table[Column1 > 1] | Table[Column2 < 10]
+        >>> from tinytable import Table
+        >>> tbl = Table({'x': [0, 1, 2], 'y': [11, 11, 0])
+        >>> f = tbl['x'] < 1 | tbl['y'] < 10
+        >>> tbl[f].data
+        {'x': [0, 1], 'y': [11, 11]}
         """
-        def func(value: bool) -> bool:
-            return value or other
-        return Filter(self.column, func)
+        return ChainFilter(list(x | y for x, y in zip(self, other)))
 
     def index(self, value) -> int:
         return list(iter(self)).index(value)
 
     def count(self, value) -> int:
         return list(iter(self)).count(value)
+
+
+class ChainFilter(Filter):
+    def __init__(self, values: Sequence[bool]):
+        self.values = values
+
+    def __iter__(self):
+        return iter(self.values)
+
+    def __getitem__(self, i) -> bool:
+        return self.values[i]
+
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def __contains__(self, value) -> bool:
+        return value in self.values
+
+    def __reversed__(self) -> ChainFilter:
+        return ChainFilter(list(reversed(self.values)))
+
+    
