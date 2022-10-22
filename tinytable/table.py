@@ -21,6 +21,7 @@ import tinytable.functional.features as features
 import tinytable.functional.utils as utils
 import tinytable.functional.filter as filter
 import tinytable.functional.rows as rows
+import tinytable.functional.columns as columns
 import tinytable.functional.copy as data_copy
 import tinytable.functional.group as group
 import tinytable.functional.join as join
