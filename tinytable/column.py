@@ -124,6 +124,9 @@ class Column:
     def index(self, value) -> int:
         return list(self.data).index(value)
 
+    def count(self, value) -> int:
+        return list(self.data).count(value)
+
 
 def itercolumns(data: MutableMapping, parent, labels=None) -> Generator[Column, None, None]:
     for col in data.keys():
