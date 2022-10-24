@@ -1,4 +1,5 @@
 from __future__ import annotations
+from mailbox import NotEmptyError
 from typing import Any, Callable, MutableMapping, MutableSequence, Generator, Sequence, Union
 
 from tabulate import tabulate
@@ -109,6 +110,19 @@ class Column:
         name = str(self.name)
         groups = groupby({name: self.data}, by=str(name))
         return Group(groups, by=name)
+
+    def __reversed__(self) -> Column:
+        data = list(reversed(self.data))
+        return Column(data, self.name, self.parent, self.labels)
+
+    def __delitem__(self, i) -> None:
+        raise NotImplemented('deleting items from columns is not implemented')
+
+    def __contains__(self, value) -> bool:
+        return value in self.data
+
+    def index(self, value) -> int:
+        return list(self.data).index(value)
 
 
 def itercolumns(data: MutableMapping, parent, labels=None) -> Generator[Column, None, None]:
