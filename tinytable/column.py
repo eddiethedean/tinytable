@@ -7,6 +7,7 @@ from tinytable.filter import Filter
 from tinytable.group import Group
 from tinytable.functional.group import groupby
 from tinytable.functional.copy import copy_table
+import tinytable.functional.columns as columns
 
 
 class Column:
@@ -16,7 +17,6 @@ class Column:
         self.parent = parent
         self.labels = labels
 
-        
     def __len__(self) -> int:
         return len(self.data)
     
@@ -53,6 +53,34 @@ class Column:
 
     def __le__(self, value: Any) -> Filter:
         return Filter(self, lambda x: x <= value)
+
+    def __add__(self, other) -> Column:
+        data = columns.add_to_column(self.data, other)
+        return Column(data, self.name)
+
+    def __sub__(self, other) -> Column:
+        data = columns.subtract_from_column(self.data, other)
+        return Column(data, self.name, self.parent, self.labels)
+
+    def __mul__(self, other) -> Column:
+        data = columns.multiply_column(self.data, other)
+        return Column(data, self.name, self.parent, self.labels)
+
+    def __truediv__(self, other) -> Column:
+        data = columns.divide_column(self.data, other)
+        return Column(data, self.name, self.parent, self.labels)
+
+    def __mod__(self, other) -> Column:
+        data = columns.mod_column(self.data, other)
+        return Column(data, self.name, self.parent, self.labels)
+
+    def __floordiv__(self, other) -> Column:
+        data = columns.floor_column(self.data, other)
+        return Column(data, self.name, self.parent, self.labels)
+
+    def __pow__(self, other) -> Column:
+        data = columns.exponent_column(self.data, other)
+        return Column(data, self.name, self.parent, self.labels)
 
     def isin(self, values: MutableSequence) -> Filter:
         return Filter(self, lambda x: x in values)

@@ -250,7 +250,11 @@ class Table(MutableMapping):
             return Table(data, copy.copy(self.labels))
             
     def edit_column(self, column_name: str, values: MutableSequence, inplace=True) ->Union[None, Table]:
-        return self._store_column(column_name, values, inplace)
+        if inplace:
+            edit.edit_column_inplace(self.data, column_name, values)
+            return 
+        else:
+            return Table(edit.edit_column(self.data, column_name, values))
 
     def edit_value(self, column_name: str, index: int, value: Any, inplace=True) -> Union[None, Table]:
         if inplace:
