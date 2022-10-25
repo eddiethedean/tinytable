@@ -56,12 +56,9 @@ class Table(MutableMapping):
         for col in self.data:
             self._store_column(col, self.data[col])
 
-    def _store_column(self, column_name: str, values: Iterable, inplace=True) -> Union[None, Table]:
+    def _store_column(self, column_name: str, values: Iterable) -> Union[None, Table]:
         values = list(values)
-        if inplace:
-            self.data = edit.edit_column(self.data, column_name, values)
-        else:
-            return Table(edit.edit_column(self.data, column_name, values))
+        self.data[column_name] = values
         
     def __len__(self) -> int:
         return features.row_count(self.data)
