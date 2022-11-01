@@ -25,6 +25,7 @@ import tinytable.functional.columns as columns
 import tinytable.functional.copy as data_copy
 import tinytable.functional.group as group
 import tinytable.functional.join as join
+import tinytable.functional.na as na
 
 
 class JoinStrategy(str, Enum):
@@ -287,7 +288,12 @@ class Table(MutableMapping):
         replace_worksheet: bool = True
     ) -> None:
         """Save Table in Excel Workbook."""
-        excel.data_to_excel_file(self.data, path, sheet_name, replace_workbook, replace_worksheet)
+        excel.data_to_excel_file(
+            self.data,
+            path,
+            sheet_name,
+            replace_workbook,
+            replace_worksheet)
 
     def to_sqlite(
         self,
@@ -298,12 +304,13 @@ class Table(MutableMapping):
         append_records = False
     ) -> None:
         """Save Table in sqlite database."""
-        sqlite.data_to_sqlite_table(self.data,
-                             path,
-                             table_name,
-                             primary_key,
-                             replace_table,
-                             append_records)
+        sqlite.data_to_sqlite_table(
+            self.data,
+            path,
+            table_name,
+            primary_key,
+            replace_table,
+            append_records)
 
     def label_head(self, n: int = 5) -> Union[None, List]:
         return None if self.labels is None else self.labels[:5]
@@ -393,6 +400,91 @@ class Table(MutableMapping):
 
     def pstd(self) -> dict:
         return group.pstdev_data(self.data)
+
+    def fillna(
+        self,
+        value: Optional[Any] = None,
+        method: Optional[str] = None,
+        axis: Optional[Union[int, str]] = 0,
+        inplace: bool = False,
+        limit: Optional[int] = None,
+        na_value: Optional[Any] = None
+    ) -> Union[Table, None]:
+        """
+        Fill missing values using the specified method.
+
+        Parameters
+        ----------
+        value : Any
+            value to use to fill missing values
+        method : {'backfill', 'bfill', 'pad', 'ffill', None}
+            method to use for filling holes in new Table.
+            pad/ffill: propagate last valid observation
+            forward to next valid
+            backfill/bfill: use next valid observation to fill gap.
+        axis : int | str, default 0
+            {0 or 'rows', 1 or 'columns'}
+        inplace : bool
+            Change Table data inplace (True)
+            Return new Table (False)
+        limit : int, optional
+            Max number of values to fill, fill all if None
+        na_value : Any, default None
+            The missing value to fill. use np.nan for pandas DataFrame
+
+        Returns
+        -------
+        Table | None
+            Table with missing values filled or None if inplace=True
+        """
+        data = na.fillna(self.data, value, method, axis, inplace, limit, na_value)
+        if data is not None:
+            return Table(data, self.labels)
+                
+    def isna(self, na_value=None) -> Table:
+        data = na.isna(self.data, na_value)
+        return Table(data, self.labels)
+
+    def notna(self, na_value=None) -> Table:
+        data = na.notna(self.data, na_value)
+        return Table(data, self.labels)
+
+    isnull = isna
+    notnull = notna
+
+    def dropna(
+        self,
+        axis: Union[int, str] = 0,
+        how: str = 'any',
+        thresh: Optional[int] = None,
+        subset: Optional[Sequence[str]] = None,
+        inplace: bool = False,
+        na_value: Optional[Any] = None
+    ) -> Union[Table, None]:
+        """
+        Remove missing values.
+
+        Parameters
+        ----------
+        axis : int | str
+            {0 or 'rows', 1 or 'columns'}
+        how : str
+            {'any', 'all'}
+        thresh : int, optional
+            Require that many not missing values. Cannot be combined with how.
+        subset : Sequence[str]
+            column names to consider when checking for row values
+        inplace : bool, default False
+            Whether to modify the original Table rather than returning new Table.
+
+        Returns
+        -------
+        Table | None
+            Table with missing values removed or None if inplace=True
+        """
+        data = na.dropna(self.data, axis, how, thresh, subset, inplace, na_value)
+        if data is not None:
+            return Table(data, self.labels)
 
 
 def read_csv(path: str, names: Optional[Sequence[str]] = None):

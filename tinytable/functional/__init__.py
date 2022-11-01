@@ -8,3 +8,4 @@ import tinytable.functional.rows
 import tinytable.functional.utils
 import tinytable.functional.validate
 import tinytable.functional.join
+import tinytable.functional.na
