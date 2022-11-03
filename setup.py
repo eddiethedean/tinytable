@@ -23,5 +23,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     python_requires='>=3.7',
-    install_requires=['tinytim>=1.8.1', 'openpyxl', 'tabulate', 'sqlite-utils']
+    install_requires=['tinytim>=1.8.1', 'openpyxl', 'tabulate', 'sqlite-utils', 'hasattrs']
 )

@@ -1,10 +1,11 @@
 from __future__ import annotations
 import copy
-from typing import Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
+from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
 from typing import Any, Callable, MutableSequence, Generator
 from enum import Enum
 
 from tabulate import tabulate
+from hasattrs import has_mapping_attrs
 
 from tinytable.column import Column
 from tinytable.row import Row
@@ -40,26 +41,32 @@ class Table(MutableMapping):
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data: Union[MutableMapping, Sequence[Sequence]] = {}, labels=None, columns=None) -> None:
-        if columns is not None and not isinstance(data, Mapping):
-            data = {col: values for col, values in zip(columns, data)}
-        if columns is not None and isinstance(data, Mapping):
-            data = {col: values for col, values in zip(columns, data.values())}
-        if not isinstance(data, Mapping):
-            data = {str(i): values for i, values in zip(range(len(data)), data)}
-
-        self.data = data
-        self._store_data()
+    def __init__(self, data: Mapping[str, Sequence] = {}, labels=None, columns=None) -> None:
+        """
+        data passed can be Mapping[str, Iterable] ({column_name: column_values}) or
+        Sequence[Sequence] (sequence of row values) with column names passed in columns parameter.
+        """
+        self.data = self._transform_data_input(data, columns)
         self._validate()
         self.labels = labels if labels is None else list(labels)
 
-    def _store_data(self):
-        for col in self.data:
-            self._store_column(col, self.data[col])
+    def _transform_data_input(self, data, columns=None) -> Dict[str, list]:
+        if columns is not None and not has_mapping_attrs(data):
+            # data is a sequence of sequences and column names passed
+            data = {col: [row[i] for row in data] for i, col in enumerate(columns)}
+        elif columns is not None and has_mapping_attrs(data):
+            # data is mapping and column names passed
+            data = {col: values for col, values in zip(columns, data.values())}
+        return {str(col): list(values) for col, values in data.items()}
 
-    def _store_column(self, column_name: str, values: Iterable) -> Union[None, Table]:
-        values = list(values)
-        self.data[column_name] = values
+    @classmethod
+    def from_records(cls, data: Sequence[Sequence], columns=None) -> Table:
+        """Convert sequence of row values to Table"""
+
+    @classmethod
+    def from_dict(cls, data: Mapping, columns=None) -> Table:
+        """Costruct Table from dict of column values"""
+        return Table(data, columns)
         
     def __len__(self) -> int:
         return features.row_count(self.data)
@@ -482,9 +489,21 @@ class Table(MutableMapping):
         Table | None
             Table with missing values removed or None if inplace=True
         """
-        data = na.dropna(self.data, axis, how, thresh, subset, inplace, na_value)
-        if data is not None:
-            return Table(data, self.labels)
+        if self.labels is not None:
+            self.data['_labels_'] = self.labels
+            if thresh is not None:
+                thresh += 1
+        data = na.dropna(self.data, axis, how, thresh, subset, False, na_value)
+        labels = data['_labels_'] if data is not None else None
+        if data is not None and '_labels_' in data:
+            del data['_labels_']
+
+        if inplace:
+            self.data = data
+            self.labels = labels
+        else:
+            # delete lables for now
+            return Table(data, labels)
 
 
 def read_csv(path: str, names: Optional[Sequence[str]] = None):
