@@ -53,15 +53,21 @@ class Table(MutableMapping):
     def _transform_data_input(self, data, columns=None) -> Dict[str, list]:
         if columns is not None and not has_mapping_attrs(data):
             # data is a sequence of sequences and column names passed
-            data = {col: [row[i] for row in data] for i, col in enumerate(columns)}
+            data = rows.row_values_to_data(data, columns)
         elif columns is not None and has_mapping_attrs(data):
             # data is mapping and column names passed
             data = {col: values for col, values in zip(columns, data.values())}
         return {str(col): list(values) for col, values in data.items()}
 
     @classmethod
-    def from_records(cls, data: Sequence[Sequence], columns=None) -> Table:
+    def from_records(
+        cls,
+        data: Sequence[Sequence],
+        columns: Sequence[str],
+        labels: Optional[Sequence] = None
+    ) -> Table:
         """Convert sequence of row values to Table"""
+        return Table(rows.row_values_to_data(data, columns), labels=labels)
 
     @classmethod
     def from_dict(cls, data: Mapping, columns=None) -> Table:
