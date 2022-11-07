@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Union, Iterator
-from typing import Any, Callable, MutableSequence, Generator
+from typing import Dict, List, Mapping, Optional, Sequence, Union, Iterator
+from typing import Any, Callable, Generator
 from enum import Enum
 
 from tabulate import tabulate
@@ -28,6 +28,13 @@ import tinytable.functional.group as group
 import tinytable.functional.join as join
 import tinytable.functional.na as na
 
+DataDict = Dict[str, list]
+ColumnNames = List[str]
+
+
+def data_dict(d: Mapping) -> DataDict:
+    return {str(col): list(values) for col, values in d.items()}
+
 
 class JoinStrategy(str, Enum):
     left = 'left'
@@ -36,28 +43,36 @@ class JoinStrategy(str, Enum):
     full = 'full'
 
 
-class Table(MutableMapping):
+class Table:
     """Data table organized into {column_name: list[values]}
     
        A pure Python version of Pandas DataFrame.
     """
-    def __init__(self, data: Mapping[str, Sequence] = {}, labels=None, columns=None) -> None:
+    def __init__(
+        self,
+        data: Union[Mapping, Sequence[Sequence]] = {},
+        labels: Optional[Sequence] = None,
+        columns: Optional[ColumnNames] = None
+    ) -> None:
         """
         data passed can be Mapping[str, Iterable] ({column_name: column_values}) or
         Sequence[Sequence] (sequence of row values) with column names passed in columns parameter.
         """
-        self.data = self._transform_data_input(data, columns)
+        data = self._transform_data_input(data, columns)
+        self.data: DataDict = data
         self._validate()
-        self.labels = labels if labels is None else list(labels)
+        self.labels: Union[None, list] = labels if labels is None else list(labels)
 
-    def _transform_data_input(self, data, columns=None) -> Dict[str, list]:
+    def _transform_data_input(
+        self,
+        data: Union[Mapping, Sequence[Sequence]],
+        columns: Optional[ColumnNames] = None
+    ) -> Dict[str, list]:
+        out: Dict[str, list]
         if columns is not None and not has_mapping_attrs(data):
             # data is a sequence of sequences and column names passed
-            data = rows.row_values_to_data(data, columns)
-        elif columns is not None and has_mapping_attrs(data):
-            # data is mapping and column names passed
-            data = {col: values for col, values in zip(columns, data.values())}
-        return {str(col): list(values) for col, values in data.items()}
+            return rows.row_values_to_data(list(data), columns)
+        return data_dict(data)
 
     @classmethod
     def from_records(
@@ -70,7 +85,7 @@ class Table(MutableMapping):
         return Table(rows.row_values_to_data(data, columns), labels=labels)
 
     @classmethod
-    def from_dict(cls, data: Mapping, columns=None) -> Table:
+    def from_dict(cls, data: DataDict, columns=None) -> Table:
         """Costruct Table from dict of column values"""
         return Table(data, columns)
         
@@ -130,7 +145,7 @@ class Table(MutableMapping):
                 return self[index]
         raise TypeError('key must be str for column selection, int for row selection or slice for subset of Table rows.')
     
-    def __setitem__(self, key: Union[str, int], values: MutableSequence) -> None:
+    def __setitem__(self, key: Union[str, int], values: list) -> None:
         if type(key) == str:
             column_name: str = str(key)
             self.edit_column(column_name, values)
@@ -160,7 +175,7 @@ class Table(MutableMapping):
         return features.column_names(self.data)
 
     @columns.setter
-    def columns(self, values: MutableSequence) -> None:
+    def columns(self, values: List[str]) -> None:
         """Set the value of the column names."""
         self.replace_column_names(values)
 
@@ -181,10 +196,10 @@ class Table(MutableMapping):
         indexes = filter.indexes_from_filter(f)
         return self.filter_by_indexes(indexes)
 
-    def only_columns(self, column_names: MutableSequence[str]) -> Table:
+    def only_columns(self, column_names: List[str]) -> Table:
         """Return new Table with only column_names Columns."""
         d = filter.only_columns(self.data, column_names)
-        return Table(d, self.labels)
+        return Table(data_dict(d), self.labels)
 
     def _convert_index(self, index: int) -> int:
         if index < 0:
@@ -247,20 +262,20 @@ class Table(MutableMapping):
     def itertuples(self) -> Generator[tuple, None, None]:
         return rows.itertuples(self.data)
     
-    def edit_row(self, index: int, values: Union[Mapping, MutableSequence], inplace=True) -> Union[None, Table]:
+    def edit_row(self, index: int, values: Union[Mapping, Sequence], inplace=True) -> Union[None, Table]:
         if inplace:
             if isinstance(values, Mapping):
                 edit.edit_row_items_inplace(self.data, index, values)
-            elif isinstance(values, MutableSequence):
+            elif isinstance(values, Sequence):
                 edit.edit_row_values_inplace(self.data, index, values)
         else:
             if isinstance(values, Mapping):
                 data = edit.edit_row_items(self.data, index, values)
-            elif isinstance(values, MutableSequence):
+            elif isinstance(values, Sequence):
                 data = edit.edit_row_values(self.data, index, values)
             return Table(data, copy.copy(self.labels))
             
-    def edit_column(self, column_name: str, values: MutableSequence, inplace=True) ->Union[None, Table]:
+    def edit_column(self, column_name: str, values: Sequence, inplace=True) ->Union[None, Table]:
         if inplace:
             edit.edit_column_inplace(self.data, column_name, values)
             return 
@@ -276,12 +291,12 @@ class Table(MutableMapping):
     def copy(self, deep=False) -> Table:
         if deep:
              return Table(data_copy.deepcopy_table(self.data), copy.deepcopy(self.labels))
-        return Table(data_copy.copy_table(self.data), copy.copy(self.labels))
+        return Table(data_dict(data_copy.copy_table(self.data)), copy.copy(self.labels))
 
     def cast_column_as(self, column_name: str, data_type: Callable) -> None:
         self.data[column_name] = [data_type(value) for value in self.data[column_name]]
 
-    def replace_column_names(self, new_keys: MutableSequence[str]) -> None:
+    def replace_column_names(self, new_keys: Sequence[str]) -> None:
         if len(new_keys) != len(self.data.keys()):
             raise ValueError('new_keys must be same len as dict keys.')
         for new_key, old_key in zip(new_keys, self.data.keys()):
@@ -332,10 +347,10 @@ class Table(MutableMapping):
         return None if self.labels is None else self.labels[5:]
 
     def head(self, n: int = 5) -> Table:
-        return Table(features.head(self.data, n), self.label_head(n))
+        return Table(data_dict(features.head(self.data, n)), self.label_head(n))
 
     def tail(self, n: int = 5) -> Table:
-        return Table(features.tail(self.data, n), self.label_tail(n))
+        return Table(data_dict(features.tail(self.data, n)), self.label_tail(n))
 
     def nunique(self) -> dict[str, int]:
         """Count number of distinct values in each column.
@@ -343,16 +358,16 @@ class Table(MutableMapping):
         """
         return utils.nunique(self.data)
 
-    def filter_by_indexes(self, indexes: MutableSequence[int]) -> Table:
+    def filter_by_indexes(self, indexes: Sequence[int]) -> Table:
         """return only rows in indexes"""
         labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
-        return Table(filter.filter_by_indexes(self.data, indexes), labels=labels)
+        return Table(data_dict(filter.filter_by_indexes(self.data, indexes)), labels=labels)
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
         indexes = filter.sample_indexes(self.data, n, random_state)
         labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
-        return Table(filter.filter_by_indexes(self.data, indexes), labels=labels)
+        return Table(data_dict(filter.filter_by_indexes(self.data, indexes)), labels=labels)
 
     def groupby(self, by: Union[str, Sequence]) -> Group:
         return Group([(value, Table(data)) for value, data in group.groupby(self.data, by)], by)
@@ -452,15 +467,15 @@ class Table(MutableMapping):
         """
         data = na.fillna(self.data, value, method, axis, inplace, limit, na_value)
         if data is not None:
-            return Table(data, self.labels)
+            return Table(data_dict(data), self.labels)
                 
     def isna(self, na_value=None) -> Table:
         data = na.isna(self.data, na_value)
-        return Table(data, self.labels)
+        return Table(data_dict(data), self.labels)
 
     def notna(self, na_value=None) -> Table:
         data = na.notna(self.data, na_value)
-        return Table(data, self.labels)
+        return Table(data_dict(data), self.labels)
 
     isnull = isna
     notnull = notna
@@ -502,14 +517,18 @@ class Table(MutableMapping):
         data = na.dropna(self.data, axis, how, thresh, subset, False, na_value)
         labels = data['_labels_'] if data is not None else None
         if data is not None and '_labels_' in data:
+            data = dict(data)
             del data['_labels_']
 
-        if inplace:
-            self.data = data
+        if inplace and data is not None:
+            self.data = data_dict(data)
+            if labels is not None:
+                labels = list(labels)
             self.labels = labels
         else:
             # delete lables for now
-            return Table(data, labels)
+            if data is not None:
+                return Table(data, labels)
 
 
 def read_csv(path: str, names: Optional[Sequence[str]] = None):
