@@ -1,12 +1,12 @@
 import csv
 from urllib import request
 from os.path import exists
-from typing import Dict, Generator, List, MutableMapping, Optional, Sequence, Union, MutableSequence
+from typing import Dict, Generator, List, Optional, Sequence, Union
 
 from tinytable.functional.features import column_names
-from tinytable.functional.rows import itertuples
-from tinytable.functional.utils import combine_names_rows, row_dicts_to_data
-from tinytable.functional.copy import copy_table
+from tinytable.functional.rows import itertuples, row_dicts_to_data
+from tinytable.functional.utils import combine_names_rows
+from tinytable.typing import DataDict, DataMapping, data_dict
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:
@@ -60,20 +60,20 @@ def chunk_csv_file(
                 yield combine_names_rows(column_names, rows)
 
 
-def convert_values(d: MutableMapping[str, MutableSequence]) -> MutableMapping[str, MutableSequence]:
+def convert_values(d: DataMapping) -> DataDict:
     """Try to convert each column values to int or float"""
-    d = copy_table(d)
+    d = data_dict(d)
     convert_values_inplace(d)
     return d
 
 
-def convert_values_inplace(d: MutableMapping[str, MutableSequence]) -> None:
+def convert_values_inplace(d: DataDict) -> None:
     for col_name, values in d.items():
         for i, value in enumerate(values):
             d[col_name][i] = convert_str(value)
 
 
-def convert_all(values: MutableSequence, to_type: type) -> bool:
+def convert_all(values: list, to_type: type) -> bool:
     new_values = []
     for value in values:
         old_value = value
@@ -86,11 +86,11 @@ def convert_all(values: MutableSequence, to_type: type) -> bool:
         values[i] = new_values[i]
     return True
         
-def convert_all_to_float(values: MutableSequence) -> bool:
+def convert_all_to_float(values: list) -> bool:
     return convert_all(values, float)
     
     
-def convert_all_to_int(values: MutableSequence) -> bool:
+def convert_all_to_int(values: list) -> bool:
     new_values = []
     for value in values:
         old_value = value
@@ -107,7 +107,7 @@ def convert_all_to_int(values: MutableSequence) -> bool:
     return True
 
 
-def convert_columns_inplace(d: MutableMapping[str, MutableSequence]) -> None:
+def convert_columns_inplace(d: DataDict) -> None:
     """Try to convert entire column to float then int
        If all successfully convert, convert entire column
        otherwise leave column as is.
@@ -135,7 +135,7 @@ def read_csv_file(
 
 
 def data_to_csv_file(
-    data: MutableMapping,
+    data: DataDict,
     path: str,
     newline='',
     encoding='utf-8-sig'

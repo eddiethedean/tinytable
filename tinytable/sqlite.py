@@ -3,8 +3,7 @@ from typing import List, MutableMapping, Optional
 from sqlite_utils import Database
 from sqlite_utils.db import Table
 
-from tinytable.functional.utils import row_dicts_to_data
-from tinytable.functional.rows import iterrows
+from tinytable.functional.rows import iterrows, row_dicts_to_data
 
 
 def get_table_names(path: str) -> List[str]:

@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tinytable",
-    version="0.16.0",
+    version="0.16.1",
     description="Pure Python lite version of Pandas DataFrame.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -23,5 +23,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     python_requires='>=3.7',
-    install_requires=['tinytim>=1.9.0', 'openpyxl', 'tabulate', 'sqlite-utils', 'hasattrs']
+    install_requires=['tinytim>=1.9.2', 'openpyxl', 'tabulate', 'sqlite-utils', 'hasattrs']
 )

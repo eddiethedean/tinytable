@@ -1,4 +1,4 @@
-from typing import Any, Generator, List, MutableMapping, Dict, Tuple
+from typing import Any, Generator, List, Dict, Tuple
 
 from tabulate import tabulate
 

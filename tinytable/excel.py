@@ -1,4 +1,4 @@
-from typing import Collection, List, MutableMapping, Optional, Union
+from typing import Collection, List, Optional, Union
 from os.path import exists
 
 from openpyxl import load_workbook, Workbook
@@ -8,6 +8,7 @@ from openpyxl.chartsheet.chartsheet import Chartsheet
 
 from tinytable.functional.utils import combine_names_rows
 from tinytable.functional.rows import itertuples
+from tinytable.types import DataDict, DataMapping
 
 
 
@@ -34,7 +35,7 @@ class WorkBook:
         return self.wb[key]
 
 
-def read_excel_file(path: str, sheet_name: Optional[str] = None) -> dict:
+def read_excel_file(path: str, sheet_name: Optional[str] = None) -> DataDict:
     """
     Reads a table object from given excel file path.
     """
@@ -63,7 +64,7 @@ def next_sheet_name(sheet_names: Collection, sheet_number: int) -> str:
         
 
 def data_to_excel_file(
-    data: MutableMapping,
+    data: DataMapping,
     path: str,
     sheet_name: Optional[str] = None,
     replace_workbook: bool = False,

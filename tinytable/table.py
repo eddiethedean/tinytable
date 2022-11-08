@@ -28,12 +28,8 @@ import tinytable.functional.group as group
 import tinytable.functional.join as join
 import tinytable.functional.na as na
 
-DataDict = Dict[str, list]
-ColumnNames = List[str]
-
-
-def data_dict(d: Mapping) -> DataDict:
-    return {str(col): list(values) for col, values in d.items()}
+from tinytable.types import DataDict, data_dict, DataMapping
+ColumnNames = Sequence[str]
 
 
 class JoinStrategy(str, Enum):
@@ -50,7 +46,7 @@ class Table:
     """
     def __init__(
         self,
-        data: Union[Mapping, Sequence[Sequence]] = {},
+        data: Union[DataMapping, Sequence[Sequence]] = {},
         labels: Optional[Sequence] = None,
         columns: Optional[ColumnNames] = None
     ) -> None:
@@ -65,7 +61,7 @@ class Table:
 
     def _transform_data_input(
         self,
-        data: Union[Mapping, Sequence[Sequence]],
+        data: Union[DataMapping, Sequence[Sequence]],
         columns: Optional[ColumnNames] = None
     ) -> Dict[str, list]:
         out: Dict[str, list]
@@ -372,25 +368,25 @@ class Table:
     def groupby(self, by: Union[str, Sequence]) -> Group:
         return Group([(value, Table(data)) for value, data in group.groupby(self.data, by)], by)
 
-    def inner_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+    def inner_join(self, other: DataMapping, left_on, right_on=None) -> Table:
         data = join.inner_join(self.data, other, left_on, right_on)
         return Table(data)
 
-    def left_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+    def left_join(self, other: DataMapping, left_on, right_on=None) -> Table:
         data = join.left_join(self.data, other, left_on, right_on)
         return Table(data)
 
-    def right_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+    def right_join(self, other: DataMapping, left_on, right_on=None) -> Table:
         data = join.right_join(self.data, other, left_on, right_on)
         return Table(data)
 
-    def full_join(self, other: Mapping[str, Sequence], left_on, right_on=None) -> Table:
+    def full_join(self, other: DataMapping, left_on, right_on=None) -> Table:
         data = join.full_join(self.data, other, left_on, right_on)
         return Table(data)
 
     def join(
         self,
-        other: Mapping[str, Sequence],
+        other: DataMapping,
         left_on,
         right_on=None,
         how: JoinStrategy = JoinStrategy.left

@@ -9,6 +9,7 @@ from tinytable.group import Group
 from tinytable.functional.group import groupby
 from tinytable.functional.copy import copy_table
 import tinytable.functional.columns as columns
+from tinytable.typing import DataDict, data_dict
 
 
 class Column:
@@ -138,8 +139,8 @@ def iteritems(data: MutableMapping, parent) -> Generator[tuple[str, Column], Non
         yield col, Column(data[col], col, parent)
 
 
-def cast_column_as(data: MutableMapping, column_name: str, data_type: Callable) -> MutableMapping:
+def cast_column_as(data: MutableMapping, column_name: str, data_type: Callable) -> DataDict:
     """Return a new dict with named column cast as data_type."""
-    new_data = copy_table(data)
+    new_data = data_dict(data)
     new_data[column_name] = [data_type(value) for value in new_data[column_name]]
     return new_data
