@@ -6,7 +6,7 @@ from typing import Dict, Generator, List, Optional, Sequence, Union
 from tinytable.functional.features import column_names
 from tinytable.functional.rows import itertuples, row_dicts_to_data
 from tinytable.functional.utils import combine_names_rows
-from tinytable.typing import DataDict, DataMapping, data_dict
+from tinytable.types import DataDict, DataMapping, data_dict
 
 
 def convert_str(value: str) -> Union[float, int, bool, str]:

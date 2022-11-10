@@ -9,7 +9,7 @@ from tinytable.group import Group
 from tinytable.functional.group import groupby
 from tinytable.functional.copy import copy_table
 import tinytable.functional.columns as columns
-from tinytable.typing import DataDict, data_dict
+from tinytable.types import DataDict, data_dict
 
 
 class Column:

@@ -357,7 +357,29 @@ class Table:
     def filter_by_indexes(self, indexes: Sequence[int]) -> Table:
         """return only rows in indexes"""
         labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
-        return Table(data_dict(filter.filter_by_indexes(self.data, indexes)), labels=labels)
+        data = data_dict(filter.filter_by_indexes(self.data, indexes))
+        if len(data) == 0:
+            self.labels = None
+        return Table(data, labels=labels)
+
+    def filter_by_indexes_inplace(self, indexes: Sequence[int]) -> None:
+        """return only rows in indexes"""
+        labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
+        data = data_dict(filter.filter_by_indexes(self.data, indexes))
+        if len(data) == 0:
+            self.labels = None
+        self.labels = labels
+        self.data = data
+    
+    def filter_by_columns(self, columns: Sequence[str]) -> Table:
+        data = data_dict(filter.filter_by_columns(self.data, columns))
+        return Table(data, labels=self.labels)
+
+    def filter_by_columns_inplace(self, columns: Sequence[str]) -> None:
+        data = data_dict(filter.filter_by_columns(self.data, columns))
+        self.data = data
+        if len(self.data) == 0:
+            self.labels = None
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
@@ -506,25 +528,30 @@ class Table:
         Table | None
             Table with missing values removed or None if inplace=True
         """
-        if self.labels is not None:
-            self.data['_labels_'] = self.labels
-            if thresh is not None:
-                thresh += 1
-        data = na.dropna(self.data, axis, how, thresh, subset, False, na_value)
-        labels = data['_labels_'] if data is not None else None
-        if data is not None and '_labels_' in data:
-            data = dict(data)
-            del data['_labels_']
-
-        if inplace and data is not None:
-            self.data = data_dict(data)
-            if labels is not None:
-                labels = list(labels)
-            self.labels = labels
+        # Get the remaining indexes/column names after dropping na rows/columns
+        if thresh is not None:
+            remaining = na.dropna_thresh(self.data, thresh, axis, subset, na_value, remaining=True)
+        elif how == 'any':
+            remaining = na.dropna_any(self.data, axis, subset, na_value, remaining=True)
+        elif how == 'all':
+            remaining = na.dropna_all(self.data, axis, subset, na_value, remaining=True)
         else:
-            # delete lables for now
-            if data is not None:
-                return Table(data, labels)
+            raise ValueError('how must be "any" or "all" if thresh is not None')
+        # Filter by indexes or columns
+        if axis in [1, 'columns']:
+            remaining_columns: List[str] = [str(name) for name in remaining]
+            if inplace:
+                self.filter_by_columns_inplace(remaining_columns)
+            else:
+                return self.filter_by_columns(remaining_columns)
+        elif axis in [0, 'rows']:
+            remaining_indexes = [int(index) for index in remaining]
+            if inplace:
+                self.filter_by_indexes_inplace(remaining_indexes)
+            else:
+                return self.filter_by_indexes(remaining_indexes)
+        else:
+            raise ValueError('axis but be 0, 1, "columns", or "rows"')
 
 
 def read_csv(path: str, names: Optional[Sequence[str]] = None):

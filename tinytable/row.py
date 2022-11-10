@@ -3,6 +3,7 @@ from typing import Any, Generator, List, Dict, Tuple
 from tabulate import tabulate
 
 from tinytable.functional.utils import row_values_generator
+from tinytable.types import DataMapping
 
 
 class Row:
@@ -47,7 +48,7 @@ class Row:
         return list(self.data.values())
 
 
-def iterrows(data: MutableMapping, parent, labels=None) -> Generator[Tuple[int, Row], None, None]:
+def iterrows(data: DataMapping, parent, labels=None) -> Generator[Tuple[int, Row], None, None]:
     if len(data) == 0:
         return
     i = 0
