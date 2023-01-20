@@ -54,7 +54,7 @@ class TestReadExcel(unittest.TestCase):
                              'Ava', 'Elijah', 'Sophia', 'Mateo'],
                     'age': [4, 5, 8, 3, 24, 56, 12, 68, 21, 90],
                     'gender': ['f', 'm', 'f', 'm', 'f', 'm', 'f', 'm', 'f', 'm']}
-        data_to_excel_file(data, path)
+        data_to_excel_file(data, path, replace_workbook=True)
         self.assertTrue(filecmp.cmp(path, copy_path))
 
 
@@ -66,7 +66,7 @@ class TestReadSql(unittest.TestCase):
                              'Ava', 'Elijah', 'Sophia', 'Mateo'],
                     'age': [4, 5, 8, 3, 24, 56, 12, 68, 21, 90],
                     'gender': ['f', 'm', 'f', 'm', 'f', 'm', 'f', 'm', 'f', 'm']}
-        data_to_sqlite_table(data, 'data.db', 'people')
+        data_to_sqlite_table(data, 'data.db', 'people', replace_table=True)
         expected = {'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                     'name': ['Olivia', 'Noah', 'Emma', 'Liam', 'Amelia', 'Oliver',
                              'Ava', 'Elijah', 'Sophia', 'Mateo'],

@@ -3,7 +3,6 @@ notebooks/
 tinytable.egg-info/
 tinytable/__pycache__/
 dist/
-data/
 build/
 .vscode/
 .ipynb_checkpoints/
