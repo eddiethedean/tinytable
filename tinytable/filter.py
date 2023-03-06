@@ -73,6 +73,9 @@ class Filter(Sequence):
         {'x': [0, 1], 'y': [11, 11]}
         """
         return ChainFilter(list(x | y for x, y in zip(self, other)))
+    
+    def __bool__(self) -> bool:
+        return False
 
     def index(self, value) -> int:
         return list(iter(self)).index(value)
