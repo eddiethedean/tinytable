@@ -1,5 +1,5 @@
-__version__ = "0.16.4"
+__version__ = "0.16.6"
 
-from tinytable.table import Table
-from tinytable.table import read_csv, read_excel, read_sqlite
-import tinytable.functional
+from tinytable.table import Table, read_csv, read_excel, read_sqlite
+
+__all__ = ["Table", "read_csv", "read_excel", "read_sqlite"]

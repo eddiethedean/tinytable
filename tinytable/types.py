@@ -1,6 +1,5 @@
 from typing import Any, Dict, Mapping, Sequence
 
-
 DataDict = Dict[str, list]
 DataMapping = Mapping[str, Sequence]
 RowDict = Dict[str, Any]

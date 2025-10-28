@@ -1,14 +1,21 @@
 from __future__ import annotations
-from mailbox import NotEmptyError
-from typing import Any, Callable, MutableMapping, MutableSequence, Generator, Sequence, Union
 
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+    Union,
+)
+
+import tinytim.columns as columns
 from tabulate import tabulate
+from tinytim.group import groupby
 
 from tinytable.filter import Filter
 from tinytable.group import Group
-from tinytable.functional.group import groupby
-from tinytable.functional.copy import copy_table
-import tinytable.functional.columns as columns
 from tinytable.types import DataDict, data_dict
 
 
@@ -21,27 +28,27 @@ class Column:
 
     def __len__(self) -> int:
         return len(self.data)
-    
+
     def __repr__(self) -> str:
-        header = 'index' if self.name is None else self.name
+        header = "index" if self.name is None else self.name
         index = True if self.labels is None else self.labels
-        return tabulate({header: self.data}, headers=[header], tablefmt='grid', showindex=index)
-    
+        return tabulate({header: self.data}, headers=[header], tablefmt="grid", showindex=index)
+
     def __iter__(self):
         return iter(self.data)
-    
+
     def __getitem__(self, index: int) -> Any:
         return self.data[index]
-    
+
     def __setitem__(self, index: int, value: Any) -> None:
         self.data[index] = value
         if self.parent is not None:
             self.parent.edit_value(self.name, index, value)
 
-    def __eq__(self, value: Any) -> Filter:
+    def __eq__(self, value: Any) -> Filter:  # type: ignore[override]
         return Filter(self, lambda x: x == value)
 
-    def __ne__(self, value: Any) -> Filter:
+    def __ne__(self, value: Any) -> Filter:  # type: ignore[override]
         return Filter(self, lambda x: x != value)
 
     def __gt__(self, value: Any) -> Filter:
@@ -117,7 +124,7 @@ class Column:
         return Column(data, self.name, self.parent, self.labels)
 
     def __delitem__(self, i) -> None:
-        raise NotImplemented('deleting items from columns is not implemented')
+        raise NotImplementedError("deleting items from columns is not implemented")
 
     def __contains__(self, value) -> bool:
         return value in self.data

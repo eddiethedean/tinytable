@@ -1,14 +1,16 @@
 from typing import Collection, List, Union
 
+import tinytim.group as group
+
 import tinytable as tt
-import tinytable.functional.group as group
 
 
 class Group:
     """Returned by Column and Table groupby method.
-       Acts like a list of tuple(key, Table)
-       Can apply aggregation function to calculate new Table.
+    Acts like a list of tuple(key, Table)
+    Can apply aggregation function to calculate new Table.
     """
+
     def __init__(self, groups: List[tuple], by: Union[str, Collection]):
         self.groups = groups
         self.by = [by] if isinstance(by, str) else by
@@ -21,7 +23,7 @@ class Group:
 
     def __getitem__(self, i: int):
         return self.groups[i]
-        
+
     def sum(self):
         labels, rows = group.sum_groups(self.groups)
         return tt.Table(rows, labels)
@@ -57,6 +59,3 @@ class Group:
     def nunique(self):
         labels, rows = group.nunique_groups(self.groups)
         return tt.Table(rows, labels)
-
-
-
