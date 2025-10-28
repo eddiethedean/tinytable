@@ -56,7 +56,7 @@ Features
 - **Pandas-like API**: Familiar interface for data manipulation
 - **Multiple I/O formats**: CSV, Excel, SQLite support
 - **Type-safe**: Full mypy type checking support
-- **Well-tested**: Comprehensive test suite with 76% coverage
+- **Well-tested**: Comprehensive test suite with 76% coverage (235 tests)
 - **Modern packaging**: Uses `pyproject.toml` and supports Python 3.8-3.13
 
 API surface
@@ -72,7 +72,7 @@ Development
 This package has been fully modernized with:
 
 - ✅ **Modern Python packaging** (`pyproject.toml`)
-- ✅ **Comprehensive testing** (pytest with 235 tests)
+- ✅ **Comprehensive testing** (pytest with 235 tests, all passing)
 - ✅ **Type safety** (mypy strict checking)
 - ✅ **Code quality** (ruff linting and formatting)
 - ✅ **CI/CD** (GitHub Actions)
@@ -94,5 +94,5 @@ ruff format .
 Notes
 -----
 
-- This release (v0.16.6) includes comprehensive modernization, bug fixes, and improved type safety.
+- This release (v0.18.1) includes comprehensive modernization, bug fixes, improved type safety, and robust empty table handling.
 - See `CHANGELOG.md` for detailed release notes.
