@@ -90,6 +90,8 @@ class Table:
         return Table(data, columns)
 
     def __len__(self) -> int:
+        if not self.data:
+            return 0
         return features.row_count(self.data)
 
     def __repr__(self) -> str:
@@ -369,6 +371,8 @@ class Table:
 
     def sample(self, n, random_state=None) -> Table:
         """return random sample of rows"""
+        if not self.data:
+            raise ValueError("Sample larger than population")
         indexes = filter.sample_indexes(self.data, n, random_state)
         labels = None if self.labels is None else filter.filter_list_by_indexes(self.labels, indexes)
         return Table(data_dict(filter.filter_by_indexes(self.data, indexes)), labels=labels)
@@ -509,6 +513,13 @@ class Table:
         Table | None
             Table with missing values removed or None if inplace=True
         """
+        # Handle empty table
+        if not self.data:
+            if inplace:
+                return None
+            else:
+                return Table()
+        
         # Get the remaining indexes/column names after dropping na rows/columns
         if thresh is not None:
             remaining = dropna.dropna_thresh(self.data, thresh, axis, subset, na_value, remaining=True)

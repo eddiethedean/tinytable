@@ -42,6 +42,8 @@ dev = [
   "pytest-cov",
   "mypy>=1.8",
   "ruff>=0.5",
+  "types-tabulate",
+  "types-openpyxl",
 ]
 
 [tool.setuptools]
